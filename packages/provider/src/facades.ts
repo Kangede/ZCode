@@ -323,11 +323,20 @@ export class ProviderSettingsFacade {
     providerId: ProviderId,
     config: ProviderConfigObject,
     metadata?: Pick<ProviderConfigRule, "providerName" | "templateId" | "enabled">,
+    resolveSubmittedConfig?: (current: ProviderConfigObject | undefined) => ProviderConfigObject,
   ): Promise<ProviderSettingsView> {
     return this.#mutateProvider(providerId, "save-provider", (target) =>
       target.savePersonalProviderOverlay(
         providerId,
-        parseProviderConfig(config),
+        // 在既有 Provider 写队列内解开密钥占位符，避免旧视图覆盖刚轮换的新密钥。
+        parseProviderConfig(
+          resolveSubmittedConfig
+            ? resolveSubmittedConfig(
+                this.getView().providers.find((provider) => provider.providerId === providerId)
+                  ?.effectiveConfig,
+              )
+            : config,
+        ),
         this.#modelMembership(providerId),
         metadata,
       ),

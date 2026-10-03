@@ -187,3 +187,11 @@ Live JPEG requests on the configured upstream return HTTP 500. The Qwen adapter 
 The existing ZCODE_DATA_BASE_DIR override also controls the default Agent config path (`.zcode/cli/config.json`). Explicit config file/base-directory arguments retain priority. This closes the legacy default-config path that otherwise bypassed downstream profile isolation. Builds respect an explicit Node heap budget and keep type emission and package resource collection sequential.
 
 Read requests may select a canvas (1024px maximum edge) or reference (128px) preview. These derived bytes use a bounded session cache; originals, hashes, uploads and downloads are unchanged. Canvas zoom above 100% fetches the original. Previews preserve PNG alpha and are never used as edit inputs.
+
+Native agent jobs select their newly accepted image version even when the user previously selected an older version; subsequent manual history selection is retained. Async UI actions discard results and errors if the session/active generation changed, preventing a late upload from becoming a reference in a different draft. Panel-origin jobs inherit the session trace context just like native tool jobs.
+
+### Provider secret projection
+
+Wire-level acceptance found pre-existing Settings and Model Selection facades exposing Provider API keys to the renderer. Their service boundary now replaces nonempty credential fields and authentication headers with a reserved saved-secret marker. The private Registry retains the real values. Returning an unchanged marker on save preserves the existing secret for that exact Provider; empty or newly entered values explicitly clear or replace it. A marker with no matching stored credential is rejected. All read, mutation response and change-event paths apply the same projection; legacy clients can continue submitting the same config shape. Tests cover reads/events, name-only saves, explicit replacement/clear, cross-provider isolation and browser WebSocket frames.
+
+Saved-secret restoration executes inside the existing Provider mutation queue via an optional local facade callback, preventing a name-only update from restoring a credential that was rotated while the update waited. No new wire argument or parallel write queue is introduced.
