@@ -38,6 +38,7 @@ export class ToolExecutorImpl implements ToolExecutor {
       browserDocumentationRoot: options.browserDocumentationRoot,
       fileSystemPort: options.fileSystemPort,
       httpClientPort: options.httpClientPort,
+      imageGenerationPort: options.imageGenerationPort,
       imageProcessorPort: options.imageProcessorPort,
       pdfDocumentPort: options.pdfDocumentPort,
       model: options.model,

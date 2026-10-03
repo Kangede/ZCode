@@ -1,3 +1,9 @@
+import {
+  imageGenerationRequestSchema,
+  imageGenerationReplySchema,
+  type ImageGenerationRequest,
+  type ImageGenerationReply,
+} from "@zcode/shared/image-generation";
 import { LocalTtftRecorder } from "./local-ttft.js";
 import { localTtftNow, localTtftFactsSchema } from "@zcode/shared/zcode-protocol-v4";
 import {
@@ -392,6 +398,7 @@ export interface V4GatewayHost {
    *
    * ⚠ 术语：artifact = 脚本经 `artifact.*` 发布给用户看的产出，不是 run 的顶层返回值。
    */
+  imageGeneration?(request: ImageGenerationRequest): Promise<ImageGenerationReply>;
   listDynamicWorkflowRunArtifacts?(
     sessionId: string,
     input: { runId: string },
@@ -1418,6 +1425,7 @@ export class ConversationV4Gateway {
       // 与 clientMode 同族的可信注入：能力位来自该连接的 clientHello，缺席一律按旧消费者办
       // （整键 patch + 旧界裁剪）。resync / rehydrate 沿用订阅上已记下的这一位，不再重取。
       workflowRunDeltas: params.workflowRunDeltas === true,
+      imageGenerationV1: params.imageGenerationV1 === true,
     });
     const routeKey = subscriptionRouteKey(
       params.topic,
@@ -1653,6 +1661,14 @@ export class ConversationV4Gateway {
    * 未知 runId 回空清单而不是错误：一个已被淘汰 / 从未存在的 run 没有产物，这是一个
    * 事实而不是故障——同一姿态见事件日志对越界 cursor 的处理。
    */
+  async imageGeneration(raw: unknown): Promise<ImageGenerationReply> {
+    const request = imageGenerationRequestSchema.parse(raw);
+    if (!this.host.imageGeneration)
+      throw new V4CapabilityUnsupportedError("imageGeneration", request.sessionId);
+    await this.ensureHostRecordForJournalRead(request.sessionId);
+    return imageGenerationReplySchema.parse(await this.host.imageGeneration(request));
+  }
+
   async workflowRunArtifacts(
     rawParams: unknown,
   ): Promise<V4ConversationWorkflowRunArtifactsResult> {

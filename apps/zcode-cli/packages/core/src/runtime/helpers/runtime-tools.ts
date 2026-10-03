@@ -1,3 +1,4 @@
+import { refreshImageGenerationTool } from "./image-generation-tools.js";
 import {
   createConfiguredHookRunner,
   createInMemoryHookRunner,
@@ -37,6 +38,7 @@ export function initializeRuntimeTooling(
   sessionId: SessionId,
 ): { executor: ToolExecutor; hookRunner?: HookRunner } {
   registerRuntimeBuiltInTools(runtime, deps);
+  refreshImageGenerationTool(runtime);
   const hookRunner = createRuntimeHookRunner(runtime, deps, sessionId);
   return {
     executor: deps.toolExecutor ?? createRuntimeToolExecutor(runtime, deps, hookRunner),
@@ -196,6 +198,7 @@ function createRuntimeToolExecutor(
     dynamicWorkflowRunPort: deps.dynamicWorkflowRunPort,
     dynamicWorkflowSnippetPort: deps.dynamicWorkflowSnippetPort,
     modelCatalogPort: deps.modelCatalogPort,
+    imageGenerationPort: deps.imageGenerationPort,
     runtimeTaskRegistry: runtime.runtimeTaskRegistry,
     readFileState: runtime.readFileState,
     // 工作流创作工具的技能门（tool/handlers/workflow-skill-gate.ts）：按模型此刻看得见的历史回答

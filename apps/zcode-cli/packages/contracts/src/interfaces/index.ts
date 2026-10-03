@@ -25,3 +25,6 @@ export * from "./browser-control.port.js";
 export * from "./shared.js";
 
 export * from "./permission-full-access.js";
+
+export * from "./image-generation.port.js";
+export * from "./image-journal.port.js";

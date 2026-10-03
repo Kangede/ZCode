@@ -1,3 +1,4 @@
+import type { ImageGenerationSettings } from "@zcode/shared/image-generation";
 // Config Port - Scoped configuration with change notification
 
 import type { CollaborationMode } from "../interfaces/session.port.js";
@@ -10,6 +11,7 @@ import type { PluginConfig, PluginOptionValues } from "../plugins/index.js";
 // ============================================================
 
 export const ConfigKey = {
+  ImageGeneration: "imageGeneration",
   ModelStreamIdleTimeout: "modelStream.idleTimeoutMs",
 
   // Permission
@@ -148,7 +150,9 @@ export type ConfigValue<K extends ConfigKey> = K extends "modelStream.idleTimeou
                                                 ? UiLocale
                                                 : K extends "ui.theme"
                                                   ? UiThemePreference
-                                                  : unknown;
+                                                  : K extends "imageGeneration"
+                                                    ? Partial<ImageGenerationSettings> | undefined
+                                                    : unknown;
 
 // ============================================================
 // Config Scope
@@ -200,6 +204,7 @@ export interface SkillCommandOverride {
 // ============================================================
 
 export interface RuntimeConfig {
+  imageGeneration?: Partial<ImageGenerationSettings>;
   modelStream: ModelStreamConfig;
   permission: {
     mode: CollaborationMode;
@@ -258,6 +263,7 @@ export interface RuntimeConfig {
 }
 
 export interface RuntimeConfigPatch {
+  imageGeneration?: Partial<ImageGenerationSettings>;
   modelStream?: Partial<ModelStreamConfig>;
   permission?: Partial<RuntimeConfig["permission"]>;
   storage?: Partial<RuntimeConfig["storage"]>;

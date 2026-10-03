@@ -1,3 +1,5 @@
+import { refreshImageGenerationTool } from "./helpers/image-generation-tools.js";
+import type { ImageGenerationPort } from "@zcode/contracts";
 import { DEFAULT_ZCODE_MODEL_CONTEXT_BUDGET_STRATEGY, resolveExecutionState } from "@zcode/shared";
 import type { BackgroundBashOutputResult } from "@zcode/shared";
 import {
@@ -292,6 +294,7 @@ export class AgentRuntime {
     this.dynamicWorkflowRunPort = deps.dynamicWorkflowRunPort;
     // GUI「配置」解析子代理模型用的目录（与工具上下文拿的是同一个端口）。
     this.modelCatalogPort = deps.modelCatalogPort;
+    this.imageGenerationPort = deps.imageGenerationPort;
     this.registry = deps.toolRegistry ?? createToolRegistry();
     this.workspaceRoot = this.workingDirectory;
     const tooling = initializeRuntimeTooling(runtime, deps, sessionId);
@@ -305,6 +308,12 @@ export class AgentRuntime {
       this.contextInitialized = true;
     }
     runtime.startMcpStartup(this.rootTraceContext);
+  }
+
+  imageGenerationPort?: ImageGenerationPort;
+
+  refreshImageGeneration(): void {
+    refreshImageGenerationTool(this as unknown as AgentRuntimeInternal);
   }
 
   async closeBrowserSession(): Promise<void> {

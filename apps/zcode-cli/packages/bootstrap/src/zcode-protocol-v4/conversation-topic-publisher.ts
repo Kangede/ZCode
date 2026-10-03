@@ -1,3 +1,4 @@
+import { withoutImageGenerationDisplay } from "./image-generation-legacy.js";
 // Conversation topic 发布器（传输外壳）。
 // CLI 侧权威运行时：内存有界 delta 日志（logEpoch + 保留窗）+ subscribe(base)
 // 裁决（resume/snapshot）+ 每订阅者 flush 管线（filter → coalesce → 打帧）。
@@ -98,6 +99,7 @@ interface Subscription {
    * false = 旧消费者：增量折成整键 patch、快照裁到旧界（conversation-workflow-run-deltas.ts）。
    */
   workflowRunDeltas: boolean;
+  imageGenerationV1: boolean;
   /** flush buffer：push 时已过 profile 过滤与该订阅的编码，flush 时 coalesce 打帧。 */
   buffer: ConversationDelta[];
   bufferBytes: number;
@@ -120,6 +122,7 @@ interface ConversationSubscribeParams {
    * 注入，面向 UI 的 subscribe 选不了。缺省 false——能力位缺席一律按旧消费者办。
    */
   workflowRunDeltas?: boolean;
+  imageGenerationV1?: boolean;
 }
 
 interface ConversationSubscribeResult {
@@ -340,7 +343,10 @@ export class ConversationTopicPublisher {
    * 它的 `.max(256)` 会让**整帧**解析失败（已知键上的解析错误不会只剥掉一个键）。
    */
   private getWireSnapshotForSubscription(subscription: Subscription): ConversationSnapshot {
-    const snapshot = this.getWireSnapshotForProfile(subscription.profile);
+    const source = this.getWireSnapshotForProfile(subscription.profile);
+    const snapshot = subscription.imageGenerationV1
+      ? source
+      : withoutImageGenerationDisplay(source);
     if (subscription.workflowRunDeltas || snapshot.workflowRuns === undefined) return snapshot;
     const workflowRuns = clampWorkflowRunsForLegacy(snapshot.workflowRuns);
     return workflowRuns === snapshot.workflowRuns ? snapshot : { ...snapshot, workflowRuns };
@@ -356,7 +362,10 @@ export class ConversationTopicPublisher {
     deltas: readonly ConversationDelta[],
     subscription: Subscription,
   ): readonly ConversationDelta[] {
-    const filtered = filterConversationDeltasForProfile(deltas, subscription.profile);
+    const source = filterConversationDeltasForProfile(deltas, subscription.profile);
+    const filtered = subscription.imageGenerationV1
+      ? source
+      : withoutImageGenerationDisplay(source);
     if (subscription.workflowRunDeltas) return filtered;
     return encodeConversationDeltasForLegacy(filtered, this.projection.getSnapshot().workflowRuns);
   }
@@ -770,6 +779,7 @@ export class ConversationTopicPublisher {
       connectionId: params.connectionId,
       profile,
       workflowRunDeltas: params.workflowRunDeltas === true,
+      imageGenerationV1: params.imageGenerationV1 === true,
       buffer: [],
       bufferBytes: 0,
       resyncRequired: false,

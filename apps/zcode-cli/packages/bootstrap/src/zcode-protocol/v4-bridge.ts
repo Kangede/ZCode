@@ -1691,6 +1691,14 @@ export function createConversationV4Gateway(
     },
     // dwf 用户面产物的三个读面：能力条件同上。
     // ⚠ 术语：artifact = 脚本经 `artifact.*` 发布给用户看的产出，不是 run 的顶层返回值。
+    imageGeneration: async (request) => {
+      const record = context.sessions.get(request.sessionId);
+      if (!record?.app.imageGeneration)
+        throw new V4CapabilityUnsupportedError("imageGeneration", request.sessionId);
+      const reply = await record.app.imageGeneration(request);
+      if (request.action === "submit" && reply.job) record.persistence = "immediate";
+      return reply;
+    },
     listDynamicWorkflowRunArtifacts: async (sessionId, input) => {
       const record = context.sessions.get(sessionId);
       if (!record) {

@@ -1,3 +1,4 @@
+import { imageGenerationDisplaySchema } from "../image-generation.js";
 // zcode-protocol-v4 toolCall 的展示层 schema。
 // 从 rows.ts 拆出：两侧增量叠加后 rows.ts 触发 oxlint max-lines(400)。
 // 本文件只含不依赖 rowBaseFields 的纯展示 union，rows.ts 单向依赖它，无循环。
@@ -21,6 +22,7 @@ import {
 // 缺这个 union + toolOutputSchema.display 字段——协议层 zod 校验会把 agent 下发的 display 整个
 // strip 掉，导致 UI 永远拿不到 display?.kind==="cua"，CUA 工具调用退化成 fallback 渲染。
 const toolResultDisplaySchema = z.discriminatedUnion("kind", [
+  imageGenerationDisplaySchema,
   bashOutputDisplaySchema,
   z.object({
     kind: z.literal("file_diff"),
@@ -249,6 +251,7 @@ const toolCallMcpDisplaySchema = z
   .strict();
 
 export const toolCallDisplaySchema = z.discriminatedUnion("kind", [
+  imageGenerationDisplaySchema,
   toolCallNodeReplImageDisplaySchema,
   toolCallTaskOutputDisplaySchema,
   toolCallRespondToCoordinatorDisplaySchema,

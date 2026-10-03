@@ -1,5 +1,8 @@
 import { chmod, readFile, rm } from "node:fs/promises";
-import { readThirdPartyNotices, stageThirdPartyNotices } from "../../../../../scripts/third-party-notices.mjs";
+import {
+  readThirdPartyNotices,
+  stageThirdPartyNotices,
+} from "../../../../../scripts/third-party-notices.mjs";
 import { basename, dirname, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
@@ -146,6 +149,10 @@ export const resolveBuildAliases = ({
   ),
   // esbuild alias 按前缀改写导入路径。所有 shared subpath 必须在通用入口前精确声明，
   // 否则会被错误解析为 `src/index.ts/<subpath>` 并让 Desktop agent/SEA 打包失败。
+  "@zcode/shared/image-generation": resolve(
+    rootDirectory,
+    "../../packages/shared/src/image-generation.ts",
+  ),
   "@zcode/shared/zcode-protocol-v4": resolve(
     rootDirectory,
     "../../packages/shared/src/zcode-protocol-v4/index.ts",

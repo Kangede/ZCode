@@ -286,6 +286,14 @@ const hooksSchema = z
 export const ZCodeConfigFileSchema = z
   .object({
     $schema: z.string().optional(),
+    imageGeneration: z
+      .object({
+        enabled: z.boolean().optional(),
+        providerId: z.string().min(1).optional(),
+        model: z.string().min(1).max(80).optional(),
+        timeoutMs: z.number().int().min(1000).max(3600000).optional(),
+      })
+      .optional(),
     modelStream: modelStreamSchema.optional(),
     permission: permissionSchema.optional(),
     storage: storageSchema.optional(),
@@ -397,6 +405,7 @@ export function parseConfigFileToRuntimePatchWithDiagnostics(
 
 function parsedConfigFileToRuntimePatch(parsed: ZCodeConfigFile): RuntimeConfigPatch {
   const config: RuntimeConfigPatch = {};
+  if (parsed.imageGeneration) config.imageGeneration = parsed.imageGeneration;
   if (parsed.modelStream) config.modelStream = parsed.modelStream;
 
   if (parsed.permission) config.permission = parsed.permission;

@@ -41,6 +41,8 @@ export interface NodeHttpClientAdapterOptions {
   caCertFile?: string;
   dnsLookup?: DnsLookup;
   capturedUserProxyEnvFallback?: boolean;
+  /** Long image requests use the explicit total deadline, without fetch's implicit 300s header timer. */
+  requestDeadlineOnly?: boolean;
 }
 
 export class NodeHttpClientAdapter implements HttpClientPort {
@@ -97,6 +99,7 @@ export class NodeHttpClientAdapter implements HttpClientPort {
         proxy.proxyUrl,
         tlsCaCertificates,
         publicDnsLookup,
+        this.options.requestDeadlineOnly === true,
       );
       const responseUrl = response.url || url.toString();
       const body = await readResponseBody(
@@ -163,9 +166,11 @@ function fetchHttpResponse(
   proxyUrl: string | undefined,
   tlsCaCertificates: Buffer | undefined,
   publicDnsLookup: DnsLookup | undefined,
+  requestDeadlineOnly: boolean,
 ): Promise<Response> {
   const useCustomTlsAgent = url.protocol === "https:" && tlsCaCertificates !== undefined;
-  if (!proxyUrl && !useCustomTlsAgent && !publicDnsLookup) {
+  // 生图实测复现 fetch 在 300 秒提前抛 UND_ERR_HEADERS_TIMEOUT；仅显式开启的调用走已有 Node 传输。
+  if (!requestDeadlineOnly && !proxyUrl && !useCustomTlsAgent && !publicDnsLookup) {
     return fetch(url.toString(), {
       body: request.body ? Buffer.from(request.body) : undefined,
       method: request.method ?? "GET",

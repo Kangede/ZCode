@@ -526,6 +526,8 @@ export class ZCodeProtocolAgentServer {
         return await this.requireV4Gateway().workflowRuns(request.params);
       // dwf 用户面产物的三个读面。同族：只读、无状态、
       // 超时重发安全；ArtifactRead 的授权在宿主端口侧，网关只校参数与分块。
+      case V4_METHODS.conversationImageGeneration:
+        return await this.requireV4Gateway().imageGeneration(request.params);
       case V4_METHODS.conversationWorkflowRunArtifacts:
         return await this.requireV4Gateway().workflowRunArtifacts(request.params);
       case V4_METHODS.conversationWorkflowRunArtifactData:

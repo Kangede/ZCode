@@ -1,3 +1,4 @@
+import type { ImageGenerationRequest, ImageGenerationReply } from "@zcode/shared/image-generation";
 import type { ZCodeToolExecResource, BackgroundBashOutputResult } from "@zcode/shared";
 import type { AiSdkModelAdapter } from "@zcode/adapters/model";
 import type {
@@ -289,6 +290,7 @@ export interface SetLocaleResult {
 }
 
 export interface ZCodeApp {
+  imageGeneration?(request: ImageGenerationRequest): Promise<ImageGenerationReply>;
   readonly sessionId: SessionId;
   readonly traceId: string;
   readonly runtime: AgentRuntime;

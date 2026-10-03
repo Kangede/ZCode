@@ -1,3 +1,4 @@
+import { imageGenerationDisplaySchema } from "./image-generation-display.js";
 import { z } from "zod";
 import { OFFICIAL_MCP_TOOL_ERROR_CODES } from "@zcode/shared";
 
@@ -232,6 +233,7 @@ const bashOutputDisplaySchema = z
   .strict();
 
 export const toolResultDisplayPayloadSchema = z.discriminatedUnion("kind", [
+  imageGenerationDisplaySchema,
   bashOutputDisplaySchema,
   fileDiffToolResultDisplayPayloadSchema,
   localAgentMessageToolResultDisplayPayloadSchema,
