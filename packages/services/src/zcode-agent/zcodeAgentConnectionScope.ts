@@ -35,6 +35,7 @@ export interface ZCodeAgentV4ConnectionContext {
    * 是**连接**的事实，不是某一次订阅可以自选的口味。缺席 = 按旧消费者处理。
    */
   workflowRunDeltas?: boolean;
+  imageGenerationV1?: boolean;
 }
 
 const TRUSTED_CONNECTION_FIELD = "__zcodeTrustedV4Connection";
@@ -85,6 +86,7 @@ export function readTrustedZCodeAgentV4Connection(
     clientMode: context.clientMode,
     // 只认 true：缺席与 false 都是「旧消费者」，键在场与否是下游读端的判据。
     ...(context.workflowRunDeltas === true ? { workflowRunDeltas: true } : {}),
+    ...(context.imageGenerationV1 === true ? { imageGenerationV1: true } : {}),
   };
 }
 
@@ -221,6 +223,7 @@ function createHello(context: ZCodeAgentV4ConnectionContext): HelloMessage {
       // 本 Host 会转发 `workflowRun.*` 键级增量；客户端见到它才能在 clientHello 里回声明
       // （那个 capabilities 是 .strict() 的，反过来会让老 Host 握不上手）。
       workflowRunDeltas: true,
+      imageGenerationV1: true,
     },
     auth: {},
   };
@@ -253,6 +256,7 @@ export function createZCodeAgentConnectionScope(
   let boundClientId: string | null = null;
   /** clientHello 里的增量声明；trusted relay 没有自己的 clientHello，只搬运下游的。 */
   let clientWorkflowRunDeltas = false;
+  let clientImageGeneration = false;
   let commandQueryWorkspaceKey: string | null = null;
   let currentTransportFlowState: V4ConnectionFlowState = "drained";
   let flowClosed = false;
@@ -270,12 +274,14 @@ export function createZCodeAgentConnectionScope(
         clientMode: downstream.clientMode,
         // 增量位属于**下游那一端**：relay 自己不消费帧，只把下游 clientHello 的声明带上去。
         ...(downstream.workflowRunDeltas === true ? { workflowRunDeltas: true } : {}),
+        ...(downstream.imageGenerationV1 === true ? { imageGenerationV1: true } : {}),
       };
     }
     return {
       connectionId: context.connectionId,
       clientMode: context.clientMode,
       ...(clientWorkflowRunDeltas ? { workflowRunDeltas: true } : {}),
+      ...(clientImageGeneration ? { imageGenerationV1: true } : {}),
     };
   };
 
@@ -665,6 +671,13 @@ export function createZCodeAgentConnectionScope(
       });
 
   const overrides: Partial<IZCodeAgentService> = {
+    async imageGenerationV4(params) {
+      assertReady();
+      const connection = forwardedConnection(params);
+      if (connection.imageGenerationV1 !== true)
+        throw new Error("fault.imageGeneration.unsupported");
+      return base.imageGenerationV4(withTrustedConnection(params, connection));
+    },
     async helloConversationV4() {
       assertOpen();
       helloIssued = true;
@@ -679,6 +692,7 @@ export function createZCodeAgentConnectionScope(
       }
       boundClientId = parsed.clientId;
       clientWorkflowRunDeltas = clientSupportsWorkflowRunDeltas(parsed);
+      clientImageGeneration = parsed.capabilities?.imageGenerationV1 === true;
       handshakeComplete = true;
     },
     async setConnectionFlowStateV4(params) {

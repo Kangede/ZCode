@@ -1,3 +1,4 @@
+import { imageGenerationReplySchema } from "@zcode/shared/image-generation";
 import { requestPluginReferenceCatalog } from "#src/zcode-agent/pluginReferenceCatalogRequest.js";
 import {
   localTtftFactsSchema,
@@ -4916,6 +4917,7 @@ export function createZCodeAgentService(
           // 与 connection scope 的 hello 同一份能力集：直连 base service 的宿主内部消费者
           // 也能收到 `workflowRun.*` 增量（是否真收由它自己的 clientHello 决定）。
           workflowRunDeltas: true,
+          imageGenerationV1: true,
         },
         auth: {},
       };
@@ -4997,6 +4999,7 @@ export function createZCodeAgentService(
           // 缺席即 CLI 按旧消费者发整键 patch，并先裁到旧界——重订阅、recovery、手机
           // relay attachment 都走这一条 subscribe，所以这一处写全即可。
           ...(connection.workflowRunDeltas === true ? { workflowRunDeltas: true } : {}),
+          ...(connection.imageGenerationV1 === true ? { imageGenerationV1: true } : {}),
           // Bug 根因：冷订阅过去只传 sessionId，CLI 只能从历史 session.path 反推
           // workspace 身份；该路径已可能被 path.resolve 改写。当前 attachment 才是权威来源。
           workspace: buildWorkspaceRef(params),
@@ -5366,6 +5369,16 @@ export function createZCodeAgentService(
 
     // 字节：一次一块（≤ 512 KiB），拼接归 renderer 的 hook。授权全在 CLI 侧——
     // 这里传下去的 id 只用于在 journal 里查行，绝不成为路径。
+    async imageGenerationV4(params) {
+      const client = await getReadOnlyClient(params);
+      const { workspacePath: _path, workspaceIdentity: _identity, ...request } = params;
+      return client.request(
+        V4_METHODS.conversationImageGeneration,
+        request,
+        imageGenerationReplySchema,
+      );
+    },
+
     async conversationWorkflowRunArtifactReadV4(
       params: ZCodeAgentConversationWorkflowRunArtifactReadParams,
     ) {

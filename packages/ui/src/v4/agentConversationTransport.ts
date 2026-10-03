@@ -67,6 +67,7 @@ type ConversationV4AgentService = Pick<
   | "conversationWorkflowRunArtifactsV4"
   | "conversationWorkflowRunArtifactDataV4"
   | "conversationWorkflowRunArtifactReadV4"
+  | "imageGenerationV4"
   | "conversationWorkflowRunWorkspaceV4"
   | "conversationWorkflowRunNodeResultV4"
   | "conversationFileChangesV4"
@@ -389,6 +390,12 @@ export function createAgentConversationTransport(
       });
     },
     // dwf journal 的两个只读查询拆在 agentConversationTransportWorkflowRuns.ts（max-lines 边界）。
+    async imageGeneration(request) {
+      const hello = await ensureHandshake();
+      if (!hello.capabilities.imageGenerationV1)
+        throw new Error("This host does not support the image workbench");
+      return agentService.imageGenerationV4({ ...workspace, ...request });
+    },
     ...createWorkflowRunTransportMethods({ agentService, ensureHandshake, workspace }),
     async fileChanges(
       params: V4ConversationFileChangesParams,

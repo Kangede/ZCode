@@ -1,3 +1,4 @@
+import { ImageWorkbenchScope } from "@/image-generation/ImageWorkbenchScope.js";
 import type { ReactNode } from "react";
 import type {
   GitChangeSourceId,
@@ -126,49 +127,57 @@ export function V4ChatPane({
 }: V4ChatPaneProps) {
   return (
     <V4ConversationProvider workspacePath={workspacePath} workspaceIdentity={workspaceIdentity}>
-      <SessionPane
-        paneId="workspace-main"
-        readOnly={readOnly}
+      <ImageWorkbenchScope
         sessionId={sessionId}
-        openTrigger={openTrigger}
         workspacePath={workspacePath}
         workspaceIdentity={workspaceIdentity}
-        isDesktop={isDesktop}
-        provider={provider}
         onSessionCreated={onSessionCreated}
-        onSessionDeleted={onSessionDeleted}
-        draftComposerHeader={draftComposerHeader}
-        gitSummary={gitSummary}
-        gitDirtyFileCount={gitDirtyFileCount}
-        gitWorktreeReviewSourceId={gitWorktreeReviewSourceId}
-        gitWorktreeChangeSummary={gitWorktreeChangeSummary}
-        activeTaskChangeSummary={activeTaskChangeSummary}
-        summaryPanelVariantOverride={summaryPanelVariantOverride}
-        onSummaryPanelVariantOverrideChange={onSummaryPanelVariantOverrideChange}
-        onRefreshGit={onRefreshGit}
-        onOpenGitReview={onOpenGitReview}
-        onOpenBrowserUrl={onOpenBrowserUrl}
-        onOpenAutomationsMain={onOpenAutomationsMain}
-        onOpenCodeViewer={onOpenCodeViewer}
-        onAutoOpenAssistantPptx={onAutoOpenAssistantPptx}
-        onOpenFileLink={onOpenFileLink}
-        onOpenSubagentSession={onOpenSubagentSession}
-        onOpenBackgroundBash={onOpenBackgroundBash}
-        onOpenSubagentDirectory={onOpenSubagentDirectory}
-        onSyncSubagentSessionTabs={onSyncSubagentSessionTabs}
-        onOpenPlanDetail={onOpenPlanDetail}
-        onOpenWorkflowRun={onOpenWorkflowRun}
-        onOpenWorkflowArtifact={onOpenWorkflowArtifact}
-        onOpenWorkflowRunDirectory={onOpenWorkflowRunDirectory}
-        onOpenWorkflowActorSession={onOpenWorkflowActorSession}
-        onOpenWorkflowWorkspace={onOpenWorkflowWorkspace}
-        conversationFindQuery={conversationFindQuery}
-        conversationFindActiveIndex={conversationFindActiveIndex}
-        conversationFindNavigationRequestId={conversationFindNavigationRequestId}
-        onConversationFindMatchStateChange={onConversationFindMatchStateChange}
-        searchResultHighlightRequest={searchResultHighlightRequest}
-        onSearchResultHighlightDone={onSearchResultHighlightDone}
-      />
+        readOnly={readOnly}
+      >
+        <SessionPane
+          paneId="workspace-main"
+          readOnly={readOnly}
+          sessionId={sessionId}
+          openTrigger={openTrigger}
+          workspacePath={workspacePath}
+          workspaceIdentity={workspaceIdentity}
+          isDesktop={isDesktop}
+          provider={provider}
+          onSessionCreated={onSessionCreated}
+          onSessionDeleted={onSessionDeleted}
+          draftComposerHeader={draftComposerHeader}
+          gitSummary={gitSummary}
+          gitDirtyFileCount={gitDirtyFileCount}
+          gitWorktreeReviewSourceId={gitWorktreeReviewSourceId}
+          gitWorktreeChangeSummary={gitWorktreeChangeSummary}
+          activeTaskChangeSummary={activeTaskChangeSummary}
+          summaryPanelVariantOverride={summaryPanelVariantOverride}
+          onSummaryPanelVariantOverrideChange={onSummaryPanelVariantOverrideChange}
+          onRefreshGit={onRefreshGit}
+          onOpenGitReview={onOpenGitReview}
+          onOpenBrowserUrl={onOpenBrowserUrl}
+          onOpenAutomationsMain={onOpenAutomationsMain}
+          onOpenCodeViewer={onOpenCodeViewer}
+          onAutoOpenAssistantPptx={onAutoOpenAssistantPptx}
+          onOpenFileLink={onOpenFileLink}
+          onOpenSubagentSession={onOpenSubagentSession}
+          onOpenBackgroundBash={onOpenBackgroundBash}
+          onOpenSubagentDirectory={onOpenSubagentDirectory}
+          onSyncSubagentSessionTabs={onSyncSubagentSessionTabs}
+          onOpenPlanDetail={onOpenPlanDetail}
+          onOpenWorkflowRun={onOpenWorkflowRun}
+          onOpenWorkflowArtifact={onOpenWorkflowArtifact}
+          onOpenWorkflowRunDirectory={onOpenWorkflowRunDirectory}
+          onOpenWorkflowActorSession={onOpenWorkflowActorSession}
+          onOpenWorkflowWorkspace={onOpenWorkflowWorkspace}
+          conversationFindQuery={conversationFindQuery}
+          conversationFindActiveIndex={conversationFindActiveIndex}
+          conversationFindNavigationRequestId={conversationFindNavigationRequestId}
+          onConversationFindMatchStateChange={onConversationFindMatchStateChange}
+          searchResultHighlightRequest={searchResultHighlightRequest}
+          onSearchResultHighlightDone={onSearchResultHighlightDone}
+        />
+      </ImageWorkbenchScope>
     </V4ConversationProvider>
   );
 }
