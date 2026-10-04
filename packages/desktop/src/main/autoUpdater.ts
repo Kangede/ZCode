@@ -20,11 +20,10 @@ import pkg, { CancellationToken } from "electron-updater";
 import semver from "semver";
 import { logger } from "./logger.js";
 import { getElectronReleasePlatform, ManifestUpdateProvider } from "./manifestUpdateProvider.js";
+import { normalizeDevelopmentAppVersion } from "./desktopDevelopmentVersion.js";
 // 公开仓库的桌面 package 未声明 version，开发态 Electron 返回 0.0，
 // electron-updater 在初始化时会直接崩溃。仅开发态用已有构建版本补齐，发行包保持原元数据。
-if (!app.isPackaged && !semver.valid(app.getVersion())) {
-  app.setVersion(semver.valid(ZCODE_VERSION) ? ZCODE_VERSION : "0.0.0-dev");
-}
+normalizeDevelopmentAppVersion(app, ZCODE_VERSION);
 const { autoUpdater } = pkg;
 
 export const CHECK_FOR_UPDATE_MENU_ID = "check-for-update";
