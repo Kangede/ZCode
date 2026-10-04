@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { runCommand } from "./spawn-command.mjs";
 import { resolve, join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
@@ -9,7 +9,7 @@ const { values } = parseArgs({
 });
 const metadata = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 const version = `${metadata.version}-qwen.1`;
-const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+const pnpm = "pnpm";
 const env = {
   ...process.env,
   ZCODE_ENV: "production",
@@ -18,18 +18,14 @@ const env = {
 };
 function run(command, args, cwd = root) {
   console.log(`[image-workbench] ${command} ${args.join(" ")}`);
-  const result = spawnSync(command, args, {
-    cwd,
-    env,
-    stdio: "inherit",
-    shell: process.platform === "win32" && command.endsWith(".cmd"),
-  });
+  const result = runCommand(command, args, { cwd, env, stdio: "inherit" });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`Build failed with ${result.status ?? result.signal}`);
 }
 // 构建、类型输出和资源收集不能并发：跨平台资产哈希需要稳定的同一份 dist。
 if (!values["skip-build"]) {
   run(process.execPath, ["scripts/build-desktop-agent-cli.mjs"]);
+  run(pnpm, ["--filter", "@zcode/tui", "build"]);
   run(pnpm, ["--filter", "@zcode/server", "build"]);
   run(pnpm, ["--filter", "@zcode/web", "build"]);
   run(pnpm, ["prepare:build-meta"], join(root, "packages/desktop"));
