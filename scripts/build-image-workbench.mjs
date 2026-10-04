@@ -25,6 +25,8 @@ function run(command, args, cwd = root) {
 // 构建、类型输出和资源收集不能并发：跨平台资产哈希需要稳定的同一份 dist。
 if (!values["skip-build"]) {
   run(process.execPath, ["scripts/build-desktop-agent-cli.mjs"]);
+  // shared 在开发态走源码入口，没有 build script；CLI 发行资源需要它的 JS 输出。
+  run(pnpm, ["exec", "tsc", "-b", "packages/shared"]);
   run(pnpm, ["--filter", "@zcode/tui...", "--workspace-concurrency=1", "build"]);
   run(pnpm, ["--filter", "@zcode/server", "build"]);
   run(pnpm, ["--filter", "@zcode/web", "build"]);
