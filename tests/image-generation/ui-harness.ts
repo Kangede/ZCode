@@ -6,7 +6,10 @@ import { once } from "node:events";
 import { chromium, _electron, type Page } from "playwright-core";
 import { mockImageProvider } from "./mock-provider.js";
 
-export async function uiHarness(surface: "web" | "desktop") {
+export async function uiHarness(
+  surface: "web" | "desktop",
+  options: { agent?: string; server?: string; webRoot?: string; nativeEnabled?: boolean } = {},
+) {
   const root = resolve(import.meta.dirname, "../..");
   const directory = join(root, ".evidence", "automated", `${surface}-${Date.now()}`);
   const home = join(directory, "home");
@@ -14,6 +17,13 @@ export async function uiHarness(surface: "web" | "desktop") {
   const workspace = join(directory, "workspace");
   await mkdir(settings, { recursive: true });
   await mkdir(workspace, { recursive: true });
+  if (options.nativeEnabled) {
+    await mkdir(join(home, ".zcode/cli"), { recursive: true });
+    await writeFile(
+      join(home, ".zcode/cli/config.json"),
+      JSON.stringify({ imageGeneration: { enabled: true } }),
+    );
+  }
   const provider = await mockImageProvider();
   const providerFile = join(settings, "provider_config.json");
   await writeFile(
@@ -100,6 +110,10 @@ export async function uiHarness(surface: "web" | "desktop") {
     ZCODE_DISABLE_FIXED_REMOTE_DEBUGGING_PORT: "1",
   };
   delete env.ELECTRON_RUN_AS_NODE;
+  if (options.agent) {
+    env.ZCODE_AGENT_SERVER_COMMAND = process.execPath;
+    env.ZCODE_AGENT_SERVER_ARGS_JSON = JSON.stringify([options.agent, "app-server", "--stdio"]);
+  }
   const consoleErrors: string[] = [];
   const browserRequests: string[] = [];
   const leakedCredentials: string[] = [];
@@ -197,14 +211,14 @@ export async function uiHarness(surface: "web" | "desktop") {
             "--workspace",
             workspace,
           ]
-        : [join(root, "packages/server/dist/entry-http.js")];
+        : [options.server ?? join(root, "packages/server/dist/entry-http.js")];
       child = spawn(process.execPath, args, {
         env: {
           ...env,
           PORT: String(port),
           ZCODE_SERVER_HOST: "127.0.0.1",
           ZCODE_SERVER_WORKSPACE: workspace,
-          ZCODE_WEB_STATIC_ROOT: join(root, "packages/web/dist"),
+          ZCODE_WEB_STATIC_ROOT: options.webRoot ?? join(root, "packages/web/dist"),
         },
         cwd: workspace,
         stdio: ["ignore", "pipe", "pipe"],
@@ -272,7 +286,11 @@ export async function uiHarness(surface: "web" | "desktop") {
         await provider.close();
       },
       async screenshot(name: string) {
-        await page.screenshot({ path: join(directory, `${name}.png`), fullPage: true });
+        await page.screenshot({
+          path: join(directory, `${name}.png`),
+          fullPage: true,
+          animations: "disabled",
+        });
       },
       async downloadedBytes() {
         if (desktopDownload) return desktopDownload();

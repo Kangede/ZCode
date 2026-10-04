@@ -51,6 +51,8 @@ export async function imageUiScenarios(h: Awaited<ReturnType<typeof uiHarness>>)
   await page.getByText("Picture 2: alpha-reference.png", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Picture 2 move up", exact: true }).click();
   await page.getByTestId("image-prompt").fill("Make the square blue, keeping the cream background");
+  await dialog.locator('img[alt="Picture 1"]').waitFor();
+  await dialog.locator('img[alt="Picture 2"]').waitFor();
   await h.screenshot("adjustment");
   await page.getByTestId("image-submit").click();
   await page.getByRole("button", { name: "V2 · succeeded", exact: true }).waitFor();

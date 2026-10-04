@@ -56,6 +56,8 @@ pnpm test:image-generation:all
 
 构建按顺序执行，禁止同时运行类型输出和打包：资产收集会对不同平台的同名文件校验哈希。内存较小的机器可设置 `NODE_OPTIONS=--max-old-space-size=2048`、`RAYON_NUM_THREADS=2`；全仓根类型检查可能需要 3072 MiB。CLI 类型检查使用 `pnpm --dir apps/zcode-cli typecheck --concurrency=1`。不发布下载站时使用本地压缩包；默认生成的下载索引包含占位域名，不能作为在线安装地址。部署下载站后可为构建命令提供 `--base-url`。
 
+`test:image-generation:compatibility` 在设置 `ZCODE_IMAGE_TEST_BASELINE` 后连接已构建的官方基线 Host/前端，验证新旧两向互操作。
+
 专项入口包括 `test:image-generation`（契约/服务/资源）、`test:image-generation:long`（真实等待 310 秒）、`test:image-generation:web`、`test:image-generation:desktop`。自动 UI 测试使用本机模拟服务和全新隔离目录，保存 DOM、请求、下载及截图；文件选择器和桌面保存对话框由自动化提供路径，文件读写与哈希核对真实执行。
 
 对发行包运行相同 UI 测试：`ZCODE_IMAGE_TEST_DISTRIBUTION` 指向解压后的 `zcode` 目录，`ZCODE_IMAGE_TEST_ELECTRON` 指向桌面可执行文件。`ZCODE_IMAGE_TEST_BROWSER` 可选择已安装的浏览器通道，默认 Chrome。测试运行结果保存到 `.evidence/automated/`。

@@ -198,7 +198,7 @@ Saved-secret restoration executes inside the existing Provider mutation queue vi
 
 Clean replay found that the desktop-agent builder intentionally omits the TUI. The downstream combined builder explicitly builds the complete `@zcode/tui...` runtime dependency closure serially, before CLI/Web asset collection. Command spawning reuses the repository Windows shim/path handling.
 
-Mixed-version UI acceptance uses an optional `ZCODE_IMAGE_TEST_BASELINE` test-only path containing built official CLI and Web outputs. The harness can independently choose the agent executable and static client root, while keeping the service boundary current; it validates normal chat on an old Host and textual image results for an old client.
+Mixed-version UI acceptance uses an optional `ZCODE_IMAGE_TEST_BASELINE` test-only path containing built official CLI and Web outputs. The harness can independently choose the Host server/agent executables and the static client root; it validates normal chat on an old Host and textual image results for an old client.
 
 The source-only `@zcode/shared` package has no build script; the distribution builder also emits its TypeScript project explicitly before collecting the TUI dependency closure.
 

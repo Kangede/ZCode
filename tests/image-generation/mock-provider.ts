@@ -23,11 +23,49 @@ export async function mockImageProvider() {
       const bytes = Buffer.concat(chunks);
       if (req.url?.includes("chat/completions")) {
         const body = JSON.parse(bytes.toString());
-        const content = "Image acceptance session";
+        const lastUser =
+          body.messages?.findLastIndex((message: any) => message.role === "user") ?? -1;
+        const marker =
+          lastUser >= 0 &&
+          JSON.stringify(body.messages[lastUser].content).includes("[native-image]");
+        const handled = body.messages
+          ?.slice(lastUser + 1)
+          .some((message: any) => message.role === "tool");
+        const native =
+          marker &&
+          !handled &&
+          body.tools?.some((tool: any) => tool.function?.name === "GenerateImage");
+        const toolPath = JSON.stringify(
+          body.messages?.filter((message: any) => message.role === "tool") ?? [],
+        ).match(/\/[^"\s]+?\.png/)?.[0];
+        const content = handled
+          ? `Generated image saved. ${toolPath ?? ""}`
+          : "Image acceptance session";
+        const delta = native
+          ? {
+              role: "assistant",
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "fixture-image-call",
+                  type: "function",
+                  function: {
+                    name: "GenerateImage",
+                    arguments: JSON.stringify({
+                      operation: "generate",
+                      prompt: "Legacy image result",
+                      size: "512x512",
+                      outputFormat: "png",
+                    }),
+                  },
+                },
+              ],
+            }
+          : { role: "assistant", content };
         res.setHeader("Content-Type", body.stream ? "text/event-stream" : "application/json");
         if (body.stream) {
           res.end(
-            `data: ${JSON.stringify({ id: "fixture", object: "chat.completion.chunk", choices: [{ index: 0, delta: { role: "assistant", content }, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ id: "fixture", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`,
+            `data: ${JSON.stringify({ id: "fixture", object: "chat.completion.chunk", choices: [{ index: 0, delta, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ id: "fixture", choices: [{ index: 0, delta: {}, finish_reason: native ? "tool_calls" : "stop" }] })}\n\ndata: [DONE]\n\n`,
           );
         } else
           res.end(

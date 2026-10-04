@@ -50,7 +50,8 @@
     "test:image-generation:web": "node --import tsx --test tests/image-generation/web.e2e.ts",
     "test:image-generation:desktop": "node --import tsx --test tests/image-generation/desktop.e2e.ts",
     "build:image-workbench": "node scripts/build-image-workbench.mjs",
-    "test:image-generation:all": "node scripts/test-image-workbench.mjs"
+    "test:image-generation:all": "node scripts/test-image-workbench.mjs",
+    "test:image-generation:compatibility": "node --import tsx --test tests/image-generation/mixed-versions.e2e.ts"
   },
   "dependencies": {
     "border-beam": "^1.0.1",
