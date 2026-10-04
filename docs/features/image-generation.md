@@ -201,3 +201,5 @@ Clean replay found that the desktop-agent builder intentionally omits the TUI. T
 Mixed-version UI acceptance uses an optional `ZCODE_IMAGE_TEST_BASELINE` test-only path containing built official CLI and Web outputs. The harness can independently choose the agent executable and static client root, while keeping the service boundary current; it validates normal chat on an old Host and textual image results for an old client.
 
 The source-only `@zcode/shared` package has no build script; the distribution builder also emits its TypeScript project explicitly before collecting the TUI dependency closure.
+
+Sequential desktop builds reuse the upstream production-output cleanup before emitting main/host/renderer files, so stale development chunks cannot enter downstream packages.

@@ -1,4 +1,5 @@
 import { runCommand } from "./spawn-command.mjs";
+import { cleanDesktopProductionOutput } from "../packages/desktop/scripts/run-production-build.mjs";
 import { resolve, join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
@@ -30,6 +31,7 @@ if (!values["skip-build"]) {
   run(pnpm, ["--filter", "@zcode/tui...", "--workspace-concurrency=1", "build"]);
   run(pnpm, ["--filter", "@zcode/server", "build"]);
   run(pnpm, ["--filter", "@zcode/web", "build"]);
+  await cleanDesktopProductionOutput({ cwd: join(root, "packages/desktop") });
   run(pnpm, ["prepare:build-meta"], join(root, "packages/desktop"));
   run(pnpm, ["exec", "tsup"], join(root, "packages/desktop"));
   run(pnpm, ["exec", "vite", "build"], join(root, "packages/desktop"));
