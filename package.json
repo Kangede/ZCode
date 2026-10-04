@@ -44,7 +44,13 @@
     "architecture:check": "node scripts/architecture/architecture-check.mjs check",
     "architecture:report": "node scripts/architecture/architecture-check.mjs report",
     "architecture:baseline:update": "node scripts/architecture/architecture-check.mjs baseline:update",
-    "architecture:context": "node scripts/architecture/architecture-check.mjs context"
+    "architecture:context": "node scripts/architecture/architecture-check.mjs context",
+    "test:image-generation": "node --import tsx --test packages/shared/test/image-generation.test.ts tests/image-generation/*.test.ts",
+    "test:image-generation:long": "node scripts/test-image-generation-long.mjs",
+    "test:image-generation:web": "node --import tsx --test tests/image-generation/web.e2e.ts",
+    "test:image-generation:desktop": "node --import tsx --test tests/image-generation/desktop.e2e.ts",
+    "build:image-workbench": "node scripts/build-image-workbench.mjs",
+    "test:image-generation:all": "node scripts/test-image-workbench.mjs"
   },
   "dependencies": {
     "border-beam": "^1.0.1",
@@ -65,6 +71,7 @@
     "lint-staged": "^17.0.8",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.57.0",
+    "playwright-core": "1.59.1",
     "postject": "1.0.0-alpha.6",
     "release-it": "^19.2.4",
     "ts-morph": "^28.0.0",

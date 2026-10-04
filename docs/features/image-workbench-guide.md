@@ -1,0 +1,83 @@
+# Qwen 图像画布使用与维护
+
+本 fork 在官方 ZCode 3.14.3 / `29628c9` 上增加可关闭的原生图像工具、系统 Skill 和共享画布。桌面与 Web 使用同一个界面，CLI/TUI 使用同一个会话任务服务。蒙版与涂抹重绘不在本版范围内。
+
+## 安装与启用
+
+Linux 桌面包位于 `dist/image-desktop/`，使用独立的 ZCode Preview 身份，并关闭官方自动更新。CLI/Web 压缩包位于 `dist/image-cli/releases/`；解压后使用 Node 24.14.0 运行 `node zcode/bin/zcode.mjs`，加 `--web --no-open` 可启动浏览器版。仅在可信本机监听时使用 `--no-token`；默认网络监听保留官方认证行为。
+
+定制包默认数据根为 `~/.zcode-profiles/qwen-image/`，其中 `.zcode/` 保存数据。已有显式 ZCODE 路径配置优先；不要把它们指向官方数据目录，除非确实希望共享数据。源码开发与普通官方构建保持原来的目录规则。
+
+1. 在 ZCode 的服务商设置中配置自己的代理地址和密钥，选择对话模型，例如 `glm-5.3`。
+2. 点击“新建图像”，打开“启用生图”。默认使用当前会话的服务商，也可选择独立生图服务商。
+3. 模型别名默认为 `Qwen-Image-2.1`。代理须公开 `/v1/models` 和 Images API，并为当前密钥授权生图。
+4. 直接填写面板，或关闭面板后用自然语言要求生成图片。自然语言操作使用现有工具权限机制；审批后自动打开画布。
+
+CLI 单独使用时，可在默认 CLI 配置文件中合并以下片段。定制包的路径是 `~/.zcode-profiles/qwen-image/.zcode/cli/config.json`；普通源码运行沿用 `~/.zcode/cli/config.json`。
+
+```json
+{
+  "imageGeneration": {
+    "enabled": true,
+    "model": "Qwen-Image-2.1",
+    "timeoutMs": 1200000
+  }
+}
+```
+
+省略 `providerId` 表示跟随会话；设置为 ZCode 中已有的 Provider ID 可固定服务。配置文件中显式提供的字段在新会话启动时优先于画布保存的选项。关闭功能可取消画布勾选；若配置文件显式启用，还需把其中 `enabled` 改为 `false`。关闭后仍能查看历史图片。
+
+## 调整与导出
+
+选择完成的版本，点击“继续调整”，再填写变化要求。编辑目标占一个参考图名额，总计最多五张；Picture 1–5 对应提交时的顺序。可上传、拖放、移除和排序参考图。每次编辑保留旧版本；选定任意旧版本可重新开始编辑。
+
+参数变化只修改草稿，点击“生成图片”或“应用调整”后才提交。输出默认为 1024×1024、40 步、CPU 随机数生成、Cache-DiT 关闭。种子留空时，生成使用 42，编辑选择不同于已知参考图种子的新值。尺寸须为 32 的倍数，并属于七种支持的比例。引导强度超过 1 时须填写负面提示词。
+
+透明背景只支持 PNG。普通图片中的零星 Alpha 像素不会被当成移除背景的指令；透明版本的后续编辑会继承原请求的透明设置。当前上游直接输出 JPEG 会触发 `cannot write mode RGBA as JPEG`，因此 Qwen 适配器固定请求一次 PNG，再按指定质量在 Host 合成白底并编码 JPEG，默认质量 90（界面中的 0 映射为编码器最低质量 1）；结果元数据记录此处理。参考图始终使用原始字节。
+
+“下载”保存到客户端；“导出到项目”写入会话工作区的 `output/qwen-image/`，使用唯一文件名。已保存的密钥在设置读取中显示为掩码，保留掩码即可保留原值，输入新值或清空可替换或删除密钥。网络请求与密钥只在 Host 上处理，浏览器通过既有连接读取图片产物。CLI/TUI 返回文件路径、图像 ID 和元数据。
+
+## 取消、恢复与故障
+
+画布显示等待阶段和耗时，不显示伪造的扩散百分比。关闭浏览器或重连不取消任务，也不会重新发起 POST。取消会中止 Host 的网络请求，但不保证上游 GPU 已停止。Host 重启后的未完成任务显示“中断”，需用户明确重新提交。
+
+401/403、限流、模型不可见、损坏响应和超时均直接显示错误，不自动更换模型、服务或重试生图。返回 200 仍须通过文件格式、尺寸和透明像素验证；画面语义需要实际查看，模型文本不会声称已完成视觉检查。多参考图的保留效果还取决于模型与提示词，不保证逐像素一致。
+
+图像任务旁路记录位于 `<storage>/cli/image-generation/`，原始产物位于既有 `<storage>/cli/artifacts/`。备份或迁移时同时保留这两个目录和会话数据库；恢复前停止应用。不要把含密钥的 Provider 配置或本地验收目录提交到仓库。
+
+## 构建与验收
+
+使用仓库固定的 Node 24.14.0 和 pnpm 10.33.2，先完成官方 `pnpm bootstrap` 所需的运行资产准备。
+
+```bash
+pnpm build:image-workbench
+pnpm test:image-generation:all
+```
+
+构建按顺序执行，禁止同时运行类型输出和打包：资产收集会对不同平台的同名文件校验哈希。内存较小的机器可设置 `NODE_OPTIONS=--max-old-space-size=2048`、`RAYON_NUM_THREADS=2`；全仓根类型检查可能需要 3072 MiB。CLI 类型检查使用 `pnpm --dir apps/zcode-cli typecheck --concurrency=1`。不发布下载站时使用本地压缩包；默认生成的下载索引包含占位域名，不能作为在线安装地址。部署下载站后可为构建命令提供 `--base-url`。
+
+专项入口包括 `test:image-generation`（契约/服务/资源）、`test:image-generation:long`（真实等待 310 秒）、`test:image-generation:web`、`test:image-generation:desktop`。自动 UI 测试使用本机模拟服务和全新隔离目录，保存 DOM、请求、下载及截图；文件选择器和桌面保存对话框由自动化提供路径，文件读写与哈希核对真实执行。
+
+对发行包运行相同 UI 测试：`ZCODE_IMAGE_TEST_DISTRIBUTION` 指向解压后的 `zcode` 目录，`ZCODE_IMAGE_TEST_ELECTRON` 指向桌面可执行文件。`ZCODE_IMAGE_TEST_BROWSER` 可选择已安装的浏览器通道，默认 Chrome。测试运行结果保存到 `.evidence/automated/`。
+
+真实多参考图验收脚本为 `node --import tsx scripts/verify-image-generation-live.ts --connection PRIVATE.json --output OUTPUT --reference FILE ...`，须提供五个参考图路径。私有连接文件包含 `providerId`、`baseUrl`、`apiKey` 和可选 `model`，不得提交。脚本串行运行 512/1024 × 1/3/5 参考图及横纵构图，可用重复的 `--case` 选择场景；它只记录参数与哈希，不保存密钥。完成文件需逐张视觉核对。上次记录中有失败或不确定结果时脚本拒绝自动重放。
+
+真实 TUI 可通过 `scripts/capture-image-tui.mjs` 记录实际终端字节（使用 Node PTY，支持传入 `--session` 恢复），再通过 `scripts/render-image-tui.mjs` 生成可查看的终端画面。两个脚本的 `--help` 提供参数格式；环境文件仅接受 ZCODE\_ 选项，不替换系统 HOME。录制文件含会话内容，保留在本地验收目录。截图是终端字节回放，不是 Electron 或桌面系统对话框的截图替代品。
+
+Windows/macOS 路径均使用 Node 标准路径 API，CLI 包收集对应的 TUI 资源，系统 Skill 同时进入 SEA 收集清单；目标操作系统、签名和安装运行仍需在相应机器验证。
+
+## 跟进官方更新
+
+`origin` 指向个人 fork，`upstream` 指向官方。保留 `main` 为官方基线；`custom/main` 是定制集成分支，功能分支为 `feat/qwen-image-workbench`。
+
+```bash
+git fetch upstream
+git switch main
+git merge --ff-only upstream/main
+git switch custom/main
+git merge main
+```
+
+重新 fork 时从目标官方版本建立新的定制分支，按顺序重放本功能提交。先查看 [规格](image-generation.md)，再检查注册点：共享协议能力与双版本 schema、Runtime 工具注册、Bootstrap 注入、V4 路由、共享 Workbench 入口、资源打包和定制数据入口。核心图像逻辑集中在独立模块中，不改 Agent 主循环或核心数据库表结构。
+
+冲突解决后运行类型、Lint、架构检查及专项测试，最后重新构建并验收产物。缺少图像 Skill 只停用图像能力；不得以替换整个系统 Skill 包的方式规避合并。升级前保留备份与原分支，本项目不承诺任意未来版本零冲突。

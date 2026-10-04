@@ -69,3 +69,8 @@ packages/desktop/.e2e-artifacts/
 packages/desktop/.e2e-cache/
 packages/desktop/.e2e-network-capture/
 .zcode-runtime/
+
+# Native image acceptance evidence and isolated application data.
+.evidence/
+playwright-report/
+test-results/
