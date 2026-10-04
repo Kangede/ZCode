@@ -25,7 +25,7 @@ function run(command, args, cwd = root) {
 // 构建、类型输出和资源收集不能并发：跨平台资产哈希需要稳定的同一份 dist。
 if (!values["skip-build"]) {
   run(process.execPath, ["scripts/build-desktop-agent-cli.mjs"]);
-  run(pnpm, ["--filter", "@zcode/tui", "build"]);
+  run(pnpm, ["--filter", "@zcode/tui...", "--workspace-concurrency=1", "build"]);
   run(pnpm, ["--filter", "@zcode/server", "build"]);
   run(pnpm, ["--filter", "@zcode/web", "build"]);
   run(pnpm, ["prepare:build-meta"], join(root, "packages/desktop"));

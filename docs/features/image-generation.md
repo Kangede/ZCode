@@ -196,4 +196,4 @@ Wire-level acceptance found pre-existing Settings and Model Selection facades ex
 
 Saved-secret restoration executes inside the existing Provider mutation queue via an optional local facade callback, preventing a name-only update from restoring a credential that was rotated while the update waited. No new wire argument or parallel write queue is introduced.
 
-Clean replay found that the desktop-agent builder intentionally omits the TUI. The downstream combined builder explicitly builds `@zcode/tui` after its runtime dependencies, before CLI/Web asset collection. Command spawning reuses the repository Windows shim/path handling.
+Clean replay found that the desktop-agent builder intentionally omits the TUI. The downstream combined builder explicitly builds the complete `@zcode/tui...` runtime dependency closure serially, before CLI/Web asset collection. Command spawning reuses the repository Windows shim/path handling.
