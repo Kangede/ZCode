@@ -25,6 +25,7 @@ const usage = `Usage:
 
 Options:
   --skip-build        Reuse existing web/server/agent build outputs.
+  --image-workbench   Isolate downstream data in the qwen-image profile.
   --version <text>    Release version. Defaults to root package.json version.
   --out-dir <path>    Output directory. Defaults to dist/zcode.
   --base-url <url>    Default install.sh download base URL.
@@ -54,6 +55,7 @@ function parseArgs(argv) {
     help: false,
     outDir: defaultOutDir,
     skipBuild: false,
+    imageWorkbench: false,
     version: undefined,
   };
 
@@ -64,6 +66,10 @@ function parseArgs(argv) {
     }
     if (arg === "--help" || arg === "-h") {
       options.help = true;
+      continue;
+    }
+    if (arg === "--image-workbench") {
+      options.imageWorkbench = true;
       continue;
     }
     if (arg === "--skip-build") {
@@ -154,7 +160,7 @@ async function buildOutputs(skipBuild) {
   run("pnpm", ["--filter", "@zcode/web", "build"]);
 }
 
-async function stageZCodePackage({ packageRoot, version }) {
+async function stageZCodePackage({ packageRoot, version, imageWorkbench }) {
   const webDist = resolve(root, "packages", "web", "dist");
   const serverDist = resolve(root, "packages", "server", "dist");
   const agentBundle = resolve(root, "apps", "zcode-cli", "packages", "cli", "dist", "zcode.cjs");
@@ -192,6 +198,12 @@ async function stageZCodePackage({ packageRoot, version }) {
   );
   await chmod(resolve(packageRoot, "agent", "zcode.cjs"), 0o755);
 
+  // 系统技能按运行时相对路径分发；只复制 JS 会在仓库外丢失可选生图工具。
+  await cp(
+    resolve(root, "apps/zcode-cli/packages/bundled-skills"),
+    resolve(packageRoot, "agent/packages/bundled-skills"),
+    { recursive: true },
+  );
   await stageTuiRuntime(packageRoot);
   await copyRuntimeNodeModules(packageRoot);
   await patchNodePtyPrebuilds(packageRoot);
@@ -208,6 +220,7 @@ async function stageZCodePackage({ packageRoot, version }) {
     JSON.stringify(
       {
         name: "zcode-runtime",
+        ...(imageWorkbench ? { zcodeImageWorkbench: true } : {}),
         private: true,
         type: "module",
         version,
@@ -261,6 +274,7 @@ async function main() {
   await stageZCodePackage({
     packageRoot,
     version,
+    imageWorkbench: options.imageWorkbench,
   });
   const tarball = await createTarball({
     packageParent,

@@ -6,7 +6,9 @@ interface ChromiumHardwareAccelerationApp {
   disableHardwareAcceleration(): void;
 }
 
-function resolveChromiumHardwareAccelerationSettingsFile(homePath: string = homedir()): string {
+function resolveChromiumHardwareAccelerationSettingsFile(
+  homePath: string = process.env.ZCODE_DESKTOP_HOME_DIR?.trim() || homedir(),
+): string {
   return join(homePath, ".zcode", "v2", "setting.json");
 }
 
