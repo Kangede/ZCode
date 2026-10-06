@@ -33,7 +33,7 @@ export function ImageReferences({
   const [showSession, setShowSession] = useState(false);
   return (
     <div
-      className="rounded-lg border border-dashed border-border p-3"
+      className="space-y-3"
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         event.preventDefault();
@@ -76,7 +76,7 @@ export function ImageReferences({
           {sessionImages.map((artifact) => (
             <button
               key={artifact.id}
-              className="flex min-w-0 flex-col items-center gap-1 rounded-md border border-border p-2 text-ui-caption aria-pressed:bg-selected"
+              className="flex min-w-0 flex-col items-center gap-2 rounded-lg p-2 text-ui-sm hover:bg-hover aria-pressed:bg-selected"
               aria-pressed={references.includes(artifact.id)}
               aria-label={`${zh ? "选择" : "Select"} ${artifact.name}`}
               disabled={
@@ -120,30 +120,39 @@ export function ImageReferences({
             label={`Picture ${index + 1}`}
           />
           <span className="min-w-0 flex-1 truncate">
-            Picture {index + 1}:{" "}
+            {zh ? "参考图" : "Picture"} {index + 1}:{" "}
             {artifacts.find((item) => item.id === id)?.name ?? (zh ? "图像版本" : "Image version")}
           </span>
-          <button
+          <Button
+            type="button"
+            size="icon-md"
+            variant="ghost"
             aria-label={`Picture ${index + 1} ${zh ? "上移" : "move up"}`}
             disabled={busy || index === 0 || id === lockedId || references[index - 1] === lockedId}
             onClick={() => move(index, -1)}
           >
             <ArrowUp className="size-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            size="icon-md"
+            variant="ghost"
             aria-label={`Picture ${index + 1} ${zh ? "下移" : "move down"}`}
             disabled={busy || index === references.length - 1 || id === lockedId}
             onClick={() => move(index, 1)}
           >
             <ArrowDown className="size-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            size="icon-md"
+            variant="ghost"
             aria-label={`Picture ${index + 1} ${zh ? "移除" : "remove"}`}
             disabled={busy || id === lockedId}
             onClick={() => remove(index)}
           >
             <Trash2 className="size-4" />
-          </button>
+          </Button>
         </div>
       ))}
     </div>
@@ -161,10 +170,6 @@ function ReferenceThumbnail({
 }) {
   const { url } = useImageArtifactUrl(sessionId, artifact, "reference");
   return url ? (
-    <img
-      className="size-10 shrink-0 rounded-sm border border-border object-contain"
-      src={url}
-      alt={label}
-    />
+    <img className="size-12 shrink-0 rounded-md bg-surface object-cover" src={url} alt={label} />
   ) : null;
 }

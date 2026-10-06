@@ -1,14 +1,41 @@
-import { ImageReferences } from "./ImageReferences.js";
-import { Download, Plus } from "lucide-react";
-import type { ImageJob } from "@zcode/shared/image-generation";
+import { useEffect, useState } from "react";
+import {
+  ArrowDownToLine,
+  ChevronDown,
+  Download,
+  Image as ImageIcon,
+  ImagePlus,
+  MoreHorizontal,
+  Plus,
+  Scan,
+  Settings2,
+  SlidersHorizontal,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button.js";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog.js";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog.js";
+import { TooltipProvider } from "@/components/ui/tooltip.js";
 import { useImageWorkbenchDraft } from "@/hooks/useImageWorkbenchDraft.js";
-import { ImageProviderSettings } from "./ImageProviderSettings.js";
-import { ImageMaskEditor } from "./ImageMaskEditor.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { ImageCanvasNavigation } from "./ImageCanvasNavigation.js";
 import { ImageCanvas } from "./ImageCanvas.js";
-import { ImageControls, imageControlClass } from "./ImageControls.js";
+import { ImageControls } from "./ImageControls.js";
+import { ImageEditorButton } from "./ImageEditorButton.js";
+import { ImageEditorPopover } from "./ImageEditorPopover.js";
+import { ImageMaskEditor } from "./ImageMaskEditor.js";
+import { ImagePromptComposer } from "./ImagePromptComposer.js";
+import { ImageProviderSettings } from "./ImageProviderSettings.js";
+import { ImageReferences } from "./ImageReferences.js";
+import { ImageVersionStrip } from "./ImageVersionStrip.js";
+
+type EditorPanel = "provider" | "parameters" | "references" | "comparison" | "more";
 
 export function ImageWorkbench({
   sessionId,
@@ -17,316 +44,358 @@ export function ImageWorkbench({
 }: {
   sessionId: string;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange(open: boolean): void;
 }) {
   const { locale } = useZCodeIntl();
   const zh = locale === "zh-CN";
-  const {
-    workbench,
-    draft,
-    change,
-    selected,
-    selectedId,
-    comparison,
-    comparisonId,
-    setComparisonId,
-    zoom,
-    setZoom,
-    notice,
-    setNotice,
-    now,
-    jobs,
-    settings,
-    repaint,
-    running,
-    downloadUrl,
-    busy,
-    maskReady,
-    maskEditor,
-    setMaskReady,
-    edit,
-    upload,
-    submit,
-    remove,
-    move,
-    sessionImages,
-    newImage,
-    selectVersion,
-    reuse,
-    toggleReference,
-  } = useImageWorkbenchDraft(sessionId, open, zh);
+  const d = useImageWorkbenchDraft(sessionId, open, zh);
+  const [panel, setPanel] = useState<EditorPanel>();
+  useEffect(() => setPanel(undefined), [sessionId, open]);
+  const panelProps = (id: EditorPanel) => ({
+    open: panel === id,
+    // 关闭事件可能晚于另一个面板的打开事件，只收起当前事件所属的面板。
+    onOpenChange: (next: boolean) =>
+      setPanel((current) => (next ? id : current === id ? undefined : current)),
+    zh,
+    testId: `image-${id}-panel`,
+  });
+  const artifact = d.selectedId === "new" ? undefined : d.selected?.artifact;
+  const artifacts = [...(d.workbench.snapshot.references ?? []), ...d.sessionImages];
+  const draftReferences = d.draft.references.flatMap((id, index) => {
+    const image = artifacts.find((item) => item.id === id);
+    return image ? [{ artifact: image, position: index + 1 }] : [];
+  });
+  // 仅隐藏画布上正在显示的编辑目标；新建画布的参考图仍需展示。
+  const composerReferences =
+    artifact && d.draft.parentId === artifact.id
+      ? draftReferences.filter((reference) => reference.artifact.id !== artifact.id)
+      : draftReferences;
+  const needsSetup = !d.settings.enabled || !d.settings.providerId;
+  const disabled =
+    needsSetup || d.busy || !d.draft.prompt.trim() || (Boolean(d.repaint) && !d.maskReady);
+  const elapsed = Math.max(0, Math.floor((d.now - (d.selected?.createdAt ?? d.now)) / 1000));
+  const canvasLabel = d.running
+    ? zh
+      ? `正在生成 · ${elapsed} 秒`
+      : `Generating · ${elapsed}s`
+    : artifact
+      ? zh
+        ? "生成的图像"
+        : "Generated image"
+      : zh
+        ? "描述画面，开始创作"
+        : "Describe an image to get started";
+  const parameters = (
+    <ImageEditorPopover
+      {...panelProps("parameters")}
+      title={zh ? "图像参数" : "Image parameters"}
+      trigger={
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-ui-sm text-foreground-subtle"
+          data-testid="image-parameters-open"
+        >
+          <SlidersHorizontal className="size-3.5" />
+          <span>{d.draft.size.replace("x", " × ")}</span>
+          <span className="mx-1 text-foreground-subtlest">·</span>
+          {d.draft.outputFormat.toUpperCase()}
+        </Button>
+      }
+    >
+      <fieldset disabled={d.busy} className="min-w-0">
+        <ImageControls draft={d.draft} change={d.change} zh={zh} regional={Boolean(d.repaint)} />
+      </fieldset>
+    </ImageEditorPopover>
+  );
+  const references = (
+    <ImageEditorPopover
+      {...panelProps("references")}
+      title={zh ? "参考图" : "References"}
+      trigger={
+        <ImageEditorButton
+          label={zh ? "参考图" : "References"}
+          data-testid="image-references-open"
+          disabled={d.busy}
+        >
+          <ImagePlus />
+        </ImageEditorButton>
+      }
+    >
+      <ImageReferences
+        key={sessionId}
+        sessionId={sessionId}
+        references={d.draft.references}
+        artifacts={artifacts}
+        sessionImages={d.sessionImages}
+        lockedId={d.repaint?.id}
+        toggle={d.toggleReference}
+        busy={d.busy}
+        zh={zh}
+        upload={(files) => void d.upload(files)}
+        move={d.move}
+        remove={d.remove}
+      />
+    </ImageEditorPopover>
+  );
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex h-[min(92vh,900px)] w-[min(96vw,1280px)] max-w-none flex-col gap-3 overflow-hidden"
+        showCloseButton={false}
+        className="flex h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[1600px] flex-col gap-0 overflow-hidden p-0"
         data-testid="image-workbench"
       >
-        <div className="pr-10">
-          <DialogTitle className="text-ui-lg">{zh ? "图像画布" : "Image workbench"}</DialogTitle>
-          <DialogDescription className="text-ui-caption">
-            {zh
-              ? "生成图片，保留版本，逐步调整。"
-              : "Generate images, keep versions, refine your work."}
-          </DialogDescription>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
-          <Button size="sm" variant="outline" disabled={busy} onClick={newImage}>
-            <Plus className="size-4" />
-            {zh ? "新建图像" : "New image"}
-          </Button>
-          <label className="flex items-center gap-2 text-ui-caption">
-            <input
-              disabled={busy}
-              data-testid="image-enabled"
-              type="checkbox"
-              checked={settings.enabled}
-              onChange={(event) =>
-                void workbench.configure({ ...settings, enabled: event.target.checked })
+        <TooltipProvider delayDuration={250}>
+          <header className="z-20 flex h-14 shrink-0 items-center gap-1 border-b border-border px-2 sm:gap-2 sm:px-5">
+            <ImageIcon className="hidden size-4 shrink-0 text-foreground-subtle sm:block" />
+            <DialogTitle className="whitespace-nowrap text-ui-base font-medium">
+              {zh ? "图像画布" : "Image editor"}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {zh
+                ? "生成、选择和编辑会话中的图像"
+                : "Generate, select and edit images in this conversation"}
+            </DialogDescription>
+            <span className="hidden text-ui-sm text-foreground-subtlest lg:inline">
+              {artifact
+                ? `${artifact.width} × ${artifact.height} · ${d.selected!.input.outputFormat.toUpperCase()}`
+                : zh
+                  ? "新的创作"
+                  : "New creation"}
+            </span>
+            <div className="flex-1" />
+            <ImageEditorPopover
+              {...panelProps("provider")}
+              title={zh ? "生图服务" : "Image provider"}
+              side="bottom"
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="min-w-0 gap-2 text-foreground-subtle"
+                  data-testid="image-provider-settings"
+                  aria-label={zh ? "生图服务设置" : "Image provider settings"}
+                >
+                  <Settings2 className="size-4" />
+                  <span className="hidden max-w-40 truncate text-ui-sm sm:inline">
+                    {d.settings.model}
+                  </span>
+                  <ChevronDown className="hidden size-3 sm:block" />
+                </Button>
               }
-            />
-            {zh ? "启用生图" : "Enable images"}
-          </label>
-          <ImageProviderSettings
-            key={sessionId}
-            settings={settings}
-            configure={workbench.configure}
-            disabled={busy}
-            zh={zh}
-          />
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto md:flex-row">
-          {/* 窄屏按内容高度排布，防止 flex 压缩让历史版本与调整面板重叠。 */}
-          <div className="flex min-h-72 min-w-0 shrink-0 flex-col gap-3 md:flex-1">
-            <div className="flex min-h-64 flex-1 gap-2">
-              {repaint?.artifact ? (
+            >
+              <label className="flex items-center justify-between gap-3 text-ui-base">
+                {zh ? "启用生图" : "Enable images"}
+                <input
+                  data-testid="image-enabled"
+                  type="checkbox"
+                  className="size-4 accent-foreground"
+                  checked={d.settings.enabled}
+                  disabled={d.busy}
+                  onChange={(event) =>
+                    void d.workbench.configure({ ...d.settings, enabled: event.target.checked })
+                  }
+                />
+              </label>
+              <ImageProviderSettings
+                key={sessionId}
+                settings={d.settings}
+                configure={d.workbench.configure}
+                disabled={d.busy}
+                zh={zh}
+              />
+            </ImageEditorPopover>
+            <span className="mx-1 h-5 border-l border-border" />
+            <ImageEditorButton
+              label={zh ? "新建图像" : "New image"}
+              disabled={d.busy}
+              onClick={d.newImage}
+            >
+              <Plus />
+            </ImageEditorButton>
+            {/* 新建画布时旧 URL 要等 effect 才清理，下载入口必须同时确认当前产物仍存在。 */}
+            {artifact && d.downloadUrl && (
+              <Button variant="ghost" size="icon-lg" asChild>
+                <a
+                  href={d.downloadUrl}
+                  download={`${d.selected!.id}.${d.selected!.input.outputFormat === "png" ? "png" : "jpg"}`}
+                  aria-label={zh ? "下载" : "Download"}
+                  title={zh ? "下载" : "Download"}
+                >
+                  <Download />
+                </a>
+              </Button>
+            )}
+            {artifact && (
+              <ImageEditorPopover
+                {...panelProps("more")}
+                title={zh ? "图像操作" : "Image actions"}
+                side="bottom"
+                trigger={
+                  <ImageEditorButton
+                    label={zh ? "更多操作" : "More actions"}
+                    data-testid="image-more-open"
+                  >
+                    <MoreHorizontal />
+                  </ImageEditorButton>
+                }
+              >
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  disabled={d.busy}
+                  onClick={() => {
+                    d.reuse(d.selected!);
+                    setPanel(undefined);
+                  }}
+                >
+                  {zh ? "复用参数" : "Reuse parameters"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start"
+                  disabled={d.busy}
+                  onClick={async () => {
+                    const result = await d.workbench.exportImage(artifact);
+                    if (result?.path) d.setNotice(result.path);
+                    setPanel(undefined);
+                  }}
+                >
+                  <ArrowDownToLine />
+                  {zh ? "导出到项目" : "Export to project"}
+                </Button>
+              </ImageEditorPopover>
+            )}
+            <DialogClose asChild>
+              <ImageEditorButton label={zh ? "关闭画布" : "Close canvas"}>
+                <X />
+              </ImageEditorButton>
+            </DialogClose>
+          </header>
+          <section
+            className="flex min-h-0 flex-1 flex-col bg-background-alt"
+            aria-label={zh ? "编辑画布" : "Editing canvas"}
+          >
+            {artifact && !d.repaint && (
+              <div
+                className="z-10 flex shrink-0 items-center justify-center gap-1 px-3 pt-3"
+                data-testid="image-edit-mode"
+              >
+                <Button
+                  size="lg"
+                  variant={d.draft.operation === "edit" && !d.repaint ? "secondary" : "ghost"}
+                  disabled={d.busy}
+                  onClick={() => d.edit(d.selected!)}
+                >
+                  <Sparkles className="size-3.5" />
+                  {zh ? "继续调整" : "Refine"}
+                </Button>
+                {d.workbench.snapshot.capabilities?.maskEditing && (
+                  <Button
+                    size="lg"
+                    variant={d.repaint ? "secondary" : "ghost"}
+                    disabled={d.busy}
+                    onClick={() => {
+                      d.edit(d.selected!, true);
+                      d.setComparisonId(undefined);
+                    }}
+                  >
+                    <Scan className="size-3.5" />
+                    {zh ? "涂抹重绘" : "Repaint area"}
+                  </Button>
+                )}
+              </div>
+            )}
+            <div
+              className="relative flex min-h-0 flex-1 gap-3 p-2 sm:px-8 sm:py-3"
+              data-testid="image-stage"
+            >
+              {d.repaint?.artifact ? (
                 <ImageMaskEditor
-                  key={repaint.id}
-                  ref={maskEditor}
+                  key={d.repaint.id}
+                  ref={d.maskEditor}
                   sessionId={sessionId}
-                  artifact={repaint.artifact}
-                  zoom={zoom}
+                  artifact={d.repaint.artifact}
+                  zoom={d.zoom}
                   zh={zh}
-                  disabled={busy}
-                  onReady={setMaskReady}
+                  disabled={d.busy}
+                  onReady={d.setMaskReady}
+                  onExit={d.stopRepaint}
                 />
               ) : (
                 <ImageCanvas
                   sessionId={sessionId}
-                  artifact={selectedId === "new" ? undefined : selected?.artifact}
-                  pending={running && selectedId !== "new"}
-                  size={selectedId === "new" ? draft.size : (selected?.input.size ?? draft.size)}
-                  zoom={zoom}
-                  label={
-                    running
-                      ? zh
-                        ? `等待服务 · ${Math.max(0, Math.floor((now - (selected?.createdAt ?? now)) / 1000))} 秒`
-                        : `Waiting for service · ${Math.max(0, Math.floor((now - (selected?.createdAt ?? now)) / 1000))}s`
-                      : zh
-                        ? "空白画布"
-                        : "Blank canvas"
+                  artifact={artifact}
+                  pending={d.running}
+                  size={
+                    d.selectedId === "new" ? d.draft.size : (d.selected?.input.size ?? d.draft.size)
                   }
+                  zoom={d.zoom}
+                  label={canvasLabel}
                 />
               )}
-              {comparison?.artifact && (
+              {d.comparison?.artifact && (
                 <ImageCanvas
                   sessionId={sessionId}
-                  artifact={comparison.artifact}
-                  size={comparison.input.size}
-                  zoom={zoom}
+                  artifact={d.comparison.artifact}
+                  size={d.comparison.input.size}
+                  zoom={d.zoom}
                   label={zh ? "对比版本" : "Comparison version"}
                 />
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-ui-caption">
-              <label>
-                {zh ? "缩放" : "Zoom"}
-                <input
-                  className="ml-2 align-middle"
-                  type="range"
-                  aria-label={zh ? "缩放" : "Zoom"}
-                  min={25}
-                  max={200}
-                  step={25}
-                  value={zoom}
-                  onChange={(event) => setZoom(Number(event.target.value))}
-                />
-              </label>
-              <span>{zoom}%</span>
-              {selected?.artifact && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => edit(selected)}
-                  >
-                    {zh ? "继续调整" : "Refine"}
-                  </Button>
-                  {workbench.snapshot.capabilities?.maskEditing && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => {
-                        edit(selected, true);
-                        setComparisonId(undefined);
-                      }}
-                    >
-                      {zh ? "涂抹重绘" : "Repaint area"}
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => reuse(selected)}
-                  >
-                    {zh ? "复用参数" : "Reuse parameters"}
-                  </Button>
-                  {downloadUrl && (
-                    <a
-                      className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5"
-                      href={downloadUrl}
-                      download={`${selected.id}.${selected.input.outputFormat === "png" ? "png" : "jpg"}`}
-                    >
-                      <Download className="size-4" />
-                      {zh ? "下载" : "Download"}
-                    </a>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      const result = await workbench.exportImage(selected.artifact!);
-                      if (result?.path) setNotice(result.path);
-                    }}
-                  >
-                    {zh ? "导出到项目" : "Export to project"}
-                  </Button>
-                </>
+            <ImageCanvasNavigation
+              zoom={d.zoom}
+              setZoom={d.setZoom}
+              jobs={d.jobs}
+              comparisonId={d.comparisonId}
+              setComparisonId={d.setComparisonId}
+              zh={zh}
+              popoverProps={panelProps("comparison")}
+            />
+          </section>
+          <ImageVersionStrip
+            sessionId={sessionId}
+            jobs={d.jobs}
+            selectedId={d.selected?.id}
+            busy={d.busy}
+            zh={zh}
+            select={d.selectVersion}
+          />
+          {(d.workbench.error || d.selected?.error || d.notice) && (
+            <div className="mx-auto max-h-16 w-full max-w-2xl shrink-0 overflow-auto px-4 pb-2 text-ui-sm">
+              {d.workbench.error || d.selected?.error ? (
+                <p role="alert" className="text-destructive">
+                  {d.workbench.error ?? d.selected?.error?.message}
+                </p>
+              ) : (
+                <p role="status" className="break-all text-foreground-subtle">
+                  {d.notice}
+                </p>
               )}
             </div>
-            <div
-              className="flex gap-2 overflow-x-auto pb-1"
-              aria-label={zh ? "历史版本" : "Versions"}
-            >
-              {jobs.map((job, index) => (
-                <button
-                  className={`shrink-0 rounded-md border px-3 py-2 text-ui-caption ${selected?.id === job.id ? "border-brand bg-accent" : "border-border"}`}
-                  key={job.id}
-                  disabled={busy}
-                  onClick={() => selectVersion(job.id)}
-                >
-                  V{index + 1} · {statusLabel(job.status, zh)}
-                </button>
-              ))}
-            </div>
-            {jobs.filter((job) => job.artifact).length > 1 && (
-              <select
-                className={`${imageControlClass} max-w-60`}
-                aria-label={zh ? "对比版本" : "Compare version"}
-                value={comparisonId ?? ""}
-                onChange={(event) => setComparisonId(event.target.value || undefined)}
-              >
-                <option value="">{zh ? "不显示对比" : "No comparison"}</option>
-                {jobs.map(
-                  (job, index) =>
-                    job.artifact && (
-                      <option key={job.id} value={job.id}>
-                        V{index + 1} · {job.input.size}
-                      </option>
-                    ),
-                )}
-              </select>
-            )}
-            {selected?.artifact && (
-              <p className="text-ui-caption text-foreground-subtle">
-                {selected.artifact.width} × {selected.artifact.height} ·{" "}
-                {selected.input.outputFormat.toUpperCase()} · {zh ? "种子" : "Seed"}{" "}
-                {selected.input.seed}
-              </p>
-            )}
-          </div>
-          <div className="w-full shrink-0 space-y-4 md:w-80 md:overflow-y-auto">
-            <fieldset disabled={busy} className="min-w-0">
-              <ImageControls draft={draft} change={change} zh={zh} regional={Boolean(repaint)} />
-            </fieldset>
-            <ImageReferences
-              sessionId={sessionId}
-              references={draft.references}
-              artifacts={[
-                ...(workbench.snapshot.references ?? []),
-                ...jobs.flatMap((job, index) =>
-                  job.artifact ? [{ ...job.artifact, name: `V${index + 1}` }] : [],
-                ),
-              ]}
-              sessionImages={sessionImages}
-              lockedId={repaint?.id}
-              toggle={toggleReference}
-              busy={busy}
-              zh={zh}
-              upload={(files) => void upload(files)}
-              move={move}
-              remove={remove}
-            />
-            <Button
-              className="w-full"
-              data-testid="image-submit"
-              disabled={
-                !settings.enabled ||
-                !settings.providerId ||
-                busy ||
-                !draft.prompt.trim() ||
-                (Boolean(repaint) && !maskReady)
-              }
-              onClick={() => void submit()}
-            >
-              {draft.operation === "edit"
-                ? zh
-                  ? "应用调整"
-                  : "Apply adjustment"
-                : zh
-                  ? "生成图片"
-                  : "Generate image"}
-            </Button>
-            {running && (
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={() => selected && void workbench.cancel(selected)}
-              >
-                {zh ? "取消请求" : "Cancel request"}
-              </Button>
-            )}
-            {(workbench.error || selected?.error) && (
-              <p
-                role="alert"
-                className="rounded-md border border-destructive p-3 text-ui-caption text-destructive"
-              >
-                {workbench.error ?? `${selected?.error?.code}: ${selected?.error?.message}`}
-              </p>
-            )}
-            {notice && (
-              <p role="status" className="break-all text-ui-caption text-foreground-subtle">
-                {notice}
-              </p>
-            )}
-          </div>
-        </div>
+          )}
+          <ImagePromptComposer
+            sessionId={sessionId}
+            prompt={d.draft.prompt}
+            change={(prompt) => d.change({ prompt })}
+            references={composerReferences}
+            submit={() => void d.submit()}
+            disabled={disabled}
+            busy={d.busy}
+            running={d.running}
+            cancel={() => d.selected && void d.workbench.cancel(d.selected)}
+            edit={d.draft.operation === "edit"}
+            regional={Boolean(d.repaint)}
+            zh={zh}
+            openReferences={() => setPanel("references")}
+            openSettings={() => setPanel("provider")}
+            needsSetup={needsSetup}
+            referenceControl={references}
+            parameterControl={parameters}
+          />
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   );
-}
-
-function statusLabel(status: ImageJob["status"], zh: boolean): string {
-  return zh
-    ? {
-        queued: "等待",
-        running: "生成中",
-        succeeded: "已完成",
-        failed: "失败",
-        cancelled: "已取消",
-        interrupted: "已中断",
-      }[status]
-    : status;
 }

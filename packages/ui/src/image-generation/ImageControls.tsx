@@ -2,7 +2,7 @@ import type { ImageGenerationInput } from "@zcode/shared/image-generation";
 import { IMAGE_ASPECT_RATIOS } from "@zcode/shared/image-generation";
 
 export const imageControlClass =
-  "w-full rounded-md border border-input-border bg-input px-3 py-2 text-ui-base text-foreground focus:border-input-border-focused focus:outline-none";
+  "w-full min-w-0 rounded-lg border border-input-border bg-input px-3 py-2 text-mobile-input-safe text-foreground outline-none focus:border-input-border-focused disabled:opacity-50 sm:text-ui-base";
 
 export function ImageControls({
   draft,
@@ -17,15 +17,6 @@ export function ImageControls({
 }) {
   return (
     <div className="space-y-3">
-      <label className="block space-y-1 text-ui-caption">
-        {zh ? "提示词 / 调整说明" : "Prompt / adjustment"}
-        <textarea
-          data-testid="image-prompt"
-          className={`${imageControlClass} min-h-28 resize-y`}
-          value={draft.prompt}
-          onChange={(event) => change({ prompt: event.target.value })}
-        />
-      </label>
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1 text-ui-caption">
           {zh ? "宽高比" : "Aspect ratio"}
@@ -81,6 +72,7 @@ export function ImageControls({
           {zh ? "格式" : "Format"}
           <select
             className={imageControlClass}
+            aria-label={zh ? "格式" : "Format"}
             disabled={regional}
             value={draft.outputFormat}
             onChange={(event) =>
@@ -125,7 +117,7 @@ export function ImageControls({
         />
         {zh ? "透明背景" : "Transparent background"}
       </label>
-      <details className="rounded-md border border-border p-3 text-ui-caption">
+      <details className="border-t border-border pt-3 text-ui-caption">
         <summary className="cursor-pointer">{zh ? "高级设置" : "Advanced"}</summary>
         <div className="mt-3 space-y-3">
           <label className="block">
@@ -173,11 +165,6 @@ export function ImageControls({
               />
             </label>
           )}
-          <p className="text-foreground-subtle">
-            {zh
-              ? "每次生成一张，固定 40 步。高分辨率多图编辑取决于服务端显存。"
-              : "One image, 40 steps. High-resolution edits depend on server memory."}
-          </p>
         </div>
       </details>
     </div>

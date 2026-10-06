@@ -201,6 +201,11 @@ export function useImageWorkbenchDraft(sessionId: string, open: boolean, zh: boo
     else if (draft.references.length < 5)
       change({ operation: "edit", references: [...draft.references, id] });
   };
+  const stopRepaint = () => {
+    setRepaintId(undefined);
+    setMaskReady(false);
+    change({ mask: undefined });
+  };
   return {
     workbench,
     draft,
@@ -234,5 +239,6 @@ export function useImageWorkbenchDraft(sessionId: string, open: boolean, zh: boo
     selectVersion,
     reuse,
     toggleReference,
+    stopRepaint,
   };
 }

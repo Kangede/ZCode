@@ -126,12 +126,13 @@ export function useImageArtifactUrl(
   preview?: "canvas" | "reference",
 ) {
   const { imageGeneration } = useV4Conversation();
-  const [url, setUrl] = useState<string>();
+  const resourceKey = JSON.stringify([sessionId, artifact?.id, artifact?.sha256, preview]);
+  const [resource, setResource] = useState<{ key: string; url: string }>();
   const [error, setError] = useState<string>();
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | undefined;
-    setUrl(undefined);
+    setResource(undefined);
     setError(undefined);
     if (!artifact) return;
     void (async () => {
@@ -159,7 +160,7 @@ export function useImageArtifactUrl(
       }
       if (cancelled) return;
       objectUrl = URL.createObjectURL(new Blob(chunks, { type: artifact.mimeType }));
-      setUrl(objectUrl);
+      setResource({ key: resourceKey, url: objectUrl });
     })().catch((cause) => {
       if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
     });
@@ -168,7 +169,8 @@ export function useImageArtifactUrl(
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [artifact?.id, artifact?.sha256, sessionId, imageGeneration, preview]);
-  return { url, error };
+  // 切换版本先使旧 URL 失效，避免 effect 执行前把上一张图当成当前版本下载或展示。
+  return { url: resource?.key === resourceKey ? resource.url : undefined, error };
 }
 
 /** A newly accepted native tool call selects its own canvas without overriding later browsing. */

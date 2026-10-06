@@ -20,6 +20,40 @@ an Images credential produces an actionable configuration error, not a fallback.
 
 ## Regional editing, session references and independent providers (v2)
 
+### Canvas presentation refresh
+
+The editor prioritizes the image with a large, quiet canvas and a slim header.
+Prompt composition and the submit/cancel action remain anchored below the canvas;
+no large permanent parameter form competes with the image. A compact thumbnail
+history replaces the text-button version row. Zoom and edit mode live beside the
+canvas, while repaint tools form a small floating toolbar above the image.
+
+Provider configuration, output parameters and reference selection use explicit,
+accessible popovers. Provider credentials are not shown in the main editing
+surface. Existing independent provider settings, original artifact references,
+comparison, download/export and parameter reuse remain available. The main
+surface shows a clear setup action when image generation has not been configured.
+The primary action is always visible at 390×844 and desktop sizes; settings
+popovers scroll within the viewport without moving or covering their controls.
+
+This is a presentation change within the `ui` module. `useImageWorkbenchDraft`
+continues to own unsent drafts and selection, the mask editor owns unsent strokes,
+and the session image service remains the only accepted-job owner. Popover state
+is local and never submits work. Closing settings retains drafts and brush strokes.
+Leaving selection mode clears the unsent mask while retaining the prompt and
+references. Only one editing toolbar is shown at a time; the current target is
+not repeated as an extra composer thumbnail while it is already on the canvas.
+No network, credential, mask or persistence contract changes are required.
+
+Acceptance: Chinese and English, light and dark themes, wide and 390px viewports,
+keyboard popover dismissal/focus, visible composer action, history thumbnails,
+reference ordering, brush/eraser/undo/clear, comparisons, download/export, cancel
+and reload. Run actual Web and Electron flows, inspect screenshots with a real
+photographic fixture as well as deterministic pixel-check fixtures, and run root
+typecheck/lint and architecture checks. The layout takes inspiration from the
+image-focused Codex editing workflow; it is not a pixel-identical copy of a
+particular Codex release.
+
 - The workbench can create/edit an independent API-key provider (name, base URL,
   key) through the existing environment-scoped ProviderSettings facade. The
   registry remains the sole credential owner; no key is put in image journals.

@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { Jimp } from "jimp";
 
 /** Actual HTTP fixture: the renderer must never contact this listener. */
-export async function mockImageProvider(apiKey = "fixture-only-secret") {
+export async function mockImageProvider(apiKey = "fixture-only-secret", imageFixture?: Uint8Array) {
   const requests: Array<{ path: string; fields: Record<string, unknown>; references: string[] }> =
     [];
   const server = createServer(async (req, res) => {
@@ -119,9 +119,9 @@ export async function mockImageProvider(apiKey = "fixture-only-secret") {
           const color = req.url?.endsWith("edits") ? 0x2255ddff : 0xdd4422ff;
           for (let y = height! / 4; y < (height! * 3) / 4; y++)
             for (let x = width! / 4; x < (width! * 3) / 4; x++) image.setPixelColor(color, x, y);
-          const data = await image.getBuffer(
-            fields.output_format === "jpeg" ? "image/jpeg" : "image/png",
-          );
+          const data = imageFixture
+            ? Buffer.from(imageFixture)
+            : await image.getBuffer(fields.output_format === "jpeg" ? "image/jpeg" : "image/png");
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ data: [{ b64_json: data.toString("base64") }] }));
         },

@@ -21,22 +21,24 @@ export function drawMask(canvas: HTMLCanvasElement, strokes: MaskStroke[], overl
     context.globalCompositeOperation = (overlay ? stroke.erase : !stroke.erase)
       ? "destination-out"
       : "source-over";
-    // 橡皮擦必须完全去除预览 Alpha，否则视觉已清空时仍被误判为有效选区。
-    context.fillStyle = context.strokeStyle =
-      overlay && !stroke.erase ? "rgba(168,85,247,0.55)" : "white";
+    // 选区先以不透明笔迹合并，再由画布统一透明度，避免重复涂抹加深且与导出蒙版不一致。
+    context.fillStyle = context.strokeStyle = overlay ? "rgb(168,85,247)" : "white";
     context.lineWidth = stroke.width * canvas.width;
     context.lineCap = context.lineJoin = "round";
     const first = stroke.points[0];
     if (!first) continue;
-    context.beginPath();
-    context.arc(
-      first.x * canvas.width,
-      first.y * canvas.height,
-      context.lineWidth / 2,
-      0,
-      Math.PI * 2,
-    );
-    context.fill();
+    if (stroke.points.length === 1) {
+      context.beginPath();
+      context.arc(
+        first.x * canvas.width,
+        first.y * canvas.height,
+        context.lineWidth / 2,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+      continue;
+    }
     context.beginPath();
     context.moveTo(first.x * canvas.width, first.y * canvas.height);
     for (const point of stroke.points.slice(1))

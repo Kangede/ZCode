@@ -34,13 +34,13 @@ export function ImageProviderSettings({
     setKey("");
   };
   return (
-    <div className="min-w-0 flex-1 basis-full space-y-2 md:basis-0">
+    <div className="min-w-0 space-y-4">
       <fieldset
         disabled={disabled || providers.saving}
         className="flex min-w-0 flex-wrap items-center gap-2"
       >
         <select
-          className={`${imageControlClass} max-w-56`}
+          className={imageControlClass}
           aria-label={zh ? "生图服务" : "Image provider"}
           value={settings.providerId ?? ""}
           onChange={(event) => {
@@ -51,7 +51,13 @@ export function ImageProviderSettings({
           <option value="">{zh ? "选择独立生图服务" : "Select image provider"}</option>
           {settings.providerId && !selected && (
             <option value={settings.providerId}>
-              {zh ? "服务不可用，请重新选择" : "Provider unavailable — select another"}
+              {providers.state.status === "loading"
+                ? zh
+                  ? "正在加载服务…"
+                  : "Loading provider…"
+                : zh
+                  ? "服务不可用，请重新选择"
+                  : "Provider unavailable — select another"}
             </option>
           )}
           {providers.providers.map((provider) => (
@@ -73,7 +79,7 @@ export function ImageProviderSettings({
           </Button>
         )}
         <input
-          className={`${imageControlClass} max-w-48`}
+          className={imageControlClass}
           aria-label={zh ? "生图模型" : "Image model"}
           value={model}
           onChange={(event) => setModel(event.target.value)}
@@ -86,7 +92,7 @@ export function ImageProviderSettings({
       {editing && (
         <fieldset
           disabled={disabled || providers.saving}
-          className="flex min-w-0 flex-wrap items-end gap-2 rounded-lg border border-border p-2"
+          className="flex min-w-0 flex-col items-stretch gap-3 border-t border-border pt-4"
           data-testid="image-provider-form"
         >
           <label className="min-w-0 text-ui-caption">
@@ -98,7 +104,7 @@ export function ImageProviderSettings({
               onChange={(event) => setName(event.target.value)}
             />
           </label>
-          <label className="min-w-0 flex-1 text-ui-caption">
+          <label className="min-w-0 text-ui-caption">
             {zh ? "服务地址" : "Base URL"}
             <input
               className={`${imageControlClass} mt-1 block w-full`}

@@ -1,4 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { ArrowLeft, Brush, Eraser, Undo2, RotateCcw } from "lucide-react";
+import { ImageEditorButton } from "./ImageEditorButton.js";
 import type { ImageArtifact } from "@zcode/shared/image-generation";
 import { Button } from "@/components/ui/button.js";
 import { ImageCanvas } from "./ImageCanvas.js";
@@ -23,8 +25,9 @@ export const ImageMaskEditor = forwardRef<
     zh: boolean;
     disabled: boolean;
     onReady(ready: boolean): void;
+    onExit(): void;
   }
->(function ImageMaskEditor({ sessionId, artifact, zoom, zh, disabled, onReady }, ref) {
+>(function ImageMaskEditor({ sessionId, artifact, zoom, zh, disabled, onReady, onExit }, ref) {
   const [strokes, setStrokes] = useState<MaskStroke[]>([]);
   const [brush, setBrush] = useState(8);
   const [erase, setErase] = useState(false);
@@ -60,7 +63,7 @@ export const ImageMaskEditor = forwardRef<
         width={artifact.width}
         height={artifact.height}
         tabIndex={disabled ? -1 : 0}
-        className="absolute inset-0 h-full w-full touch-none cursor-crosshair focus-visible:outline-2 focus-visible:outline-ring"
+        className="absolute inset-0 h-full w-full touch-none cursor-crosshair opacity-40 focus-visible:outline-2 focus-visible:outline-ring"
         data-testid="image-mask-canvas"
         aria-label={
           zh ? "涂抹选区：方向键移动，空格涂抹" : "Paint selection: arrow keys move, Space paints"
@@ -141,7 +144,7 @@ export const ImageMaskEditor = forwardRef<
     </>
   );
   return (
-    <div className="flex min-h-72 min-w-0 flex-1 flex-col gap-2">
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col pt-12 sm:pt-14">
       <ImageCanvas
         sessionId={sessionId}
         artifact={artifact}
@@ -152,51 +155,65 @@ export const ImageMaskEditor = forwardRef<
       />
       <fieldset
         disabled={disabled}
-        className="flex min-w-0 flex-wrap items-center gap-2 text-ui-caption"
+        className="absolute top-1 left-1/2 z-10 flex max-w-[calc(100%-1rem)] -translate-x-1/2 items-center gap-1 rounded-xl border border-border bg-popover p-1.5 shadow-md"
+        data-testid="image-mask-toolbar"
       >
+        <ImageEditorButton label={zh ? "返回全图调整" : "Back to full-image edit"} onClick={onExit}>
+          <ArrowLeft />
+        </ImageEditorButton>
         <Button
-          size="sm"
-          variant={erase ? "outline" : "secondary"}
+          size="lg"
+          variant={!erase ? "secondary" : "ghost"}
+          aria-label={zh ? "画笔" : "Brush"}
           aria-pressed={!erase}
           onClick={() => setErase(false)}
         >
-          {zh ? "画笔" : "Brush"}
+          <Brush className="size-4" />
+          <span className="hidden sm:inline">{zh ? "画笔" : "Brush"}</span>
         </Button>
         <Button
-          size="sm"
-          variant={erase ? "secondary" : "outline"}
+          size="lg"
+          variant={erase ? "secondary" : "ghost"}
+          aria-label={zh ? "橡皮擦" : "Eraser"}
           aria-pressed={erase}
           onClick={() => setErase(true)}
         >
-          {zh ? "橡皮擦" : "Eraser"}
+          <Eraser className="size-4" />
+          <span className="hidden sm:inline">{zh ? "橡皮擦" : "Eraser"}</span>
         </Button>
-        <label className="flex items-center gap-1">
-          {zh ? "大小" : "Size"}
-          <input
-            aria-label={zh ? "画笔大小" : "Brush size"}
-            type="range"
-            min={1}
-            max={30}
-            value={brush}
-            onChange={(event) => setBrush(Number(event.target.value))}
-          />
-        </label>
-        <Button
-          size="sm"
-          variant="ghost"
+        <span className="mx-1 h-4 border-l border-border" />
+        <input
+          className="w-20 accent-foreground sm:w-24"
+          aria-label={zh ? "画笔大小" : "Brush size"}
+          type="range"
+          min={1}
+          max={30}
+          value={brush}
+          onChange={(event) => setBrush(Number(event.target.value))}
+        />
+        <span className="mx-1 h-4 border-l border-border" />
+        <ImageEditorButton
+          label={zh ? "撤销涂抹" : "Undo stroke"}
           disabled={!strokes.length}
           onClick={() => setStrokes((current) => current.slice(0, -1))}
         >
-          {zh ? "撤销涂抹" : "Undo stroke"}
-        </Button>
-        <Button size="sm" variant="ghost" disabled={!strokes.length} onClick={() => setStrokes([])}>
-          {zh ? "清空选区" : "Clear selection"}
-        </Button>
+          <Undo2 />
+        </ImageEditorButton>
+        <ImageEditorButton
+          label={zh ? "清空选区" : "Clear selection"}
+          disabled={!strokes.length}
+          onClick={() => setStrokes([])}
+        >
+          <RotateCcw />
+        </ImageEditorButton>
       </fieldset>
-      <p className="text-ui-caption text-foreground-subtle">
+      <p
+        className="pointer-events-none absolute bottom-0 left-0 w-full text-center text-ui-sm text-foreground-subtle"
+        aria-live="polite"
+      >
         {zh
-          ? "涂抹需要修改的区域；其它像素保持原样。支持方向键移动、空格涂抹。"
-          : "Paint the area to change; other pixels stay unchanged. Arrow keys move, Space paints."}
+          ? "涂抹要修改的区域 · 方向键移动，空格涂抹"
+          : "Paint the area to change · Arrow keys move, Space paints"}
       </p>
     </div>
   );

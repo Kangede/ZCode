@@ -8,7 +8,14 @@ import { mockImageProvider } from "./mock-provider.js";
 
 export async function uiHarness(
   surface: "web" | "desktop",
-  options: { agent?: string; server?: string; webRoot?: string; nativeEnabled?: boolean } = {},
+  options: {
+    agent?: string;
+    server?: string;
+    webRoot?: string;
+    nativeEnabled?: boolean;
+    locale?: "zh-CN" | "en-US";
+    imageFixture?: Uint8Array;
+  } = {},
 ) {
   const root = resolve(import.meta.dirname, "../..");
   const directory = join(root, ".evidence", "automated", `${surface}-${Date.now()}`);
@@ -26,6 +33,7 @@ export async function uiHarness(
   }
   const provider = await mockImageProvider(
     options.nativeEnabled ? "fixture-only-secret" : "fixture-image-secret",
+    options.imageFixture,
   );
   const chatProvider = options.nativeEnabled ? provider : await mockImageProvider();
   const providerFile = join(settings, "provider_config.json");
@@ -72,8 +80,8 @@ export async function uiHarness(
     join(settings, "setting.json"),
     JSON.stringify({
       recentProjects: [workspace],
-      locale: "en-US",
-      localePreference: "en-US",
+      locale: options.locale ?? "en-US",
+      localePreference: options.locale ?? "en-US",
       onboardingOccupation: "developer",
       providerFamilyDomain: "bigmodel",
       providerFamilyDomainMigrated: true,
