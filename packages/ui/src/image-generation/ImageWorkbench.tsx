@@ -28,6 +28,7 @@ import { ImageCanvasNavigation } from "./ImageCanvasNavigation.js";
 import { ImageCanvas } from "./ImageCanvas.js";
 import { ImageControls } from "./ImageControls.js";
 import { ImageEditorButton } from "./ImageEditorButton.js";
+import { ImageEditorNotice } from "./ImageEditorNotice.js";
 import { ImageEditorPopover } from "./ImageEditorPopover.js";
 import { ImageMaskEditor } from "./ImageMaskEditor.js";
 import { ImagePromptComposer } from "./ImagePromptComposer.js";
@@ -72,7 +73,11 @@ export function ImageWorkbench({
       : draftReferences;
   const needsSetup = !d.settings.enabled || !d.settings.providerId;
   const disabled =
-    needsSetup || d.busy || !d.draft.prompt.trim() || (Boolean(d.repaint) && !d.maskReady);
+    needsSetup ||
+    d.busy ||
+    d.capacity.exceeded ||
+    !d.draft.prompt.trim() ||
+    (Boolean(d.repaint) && !d.maskReady);
   const elapsed = Math.max(0, Math.floor((d.now - (d.selected?.createdAt ?? d.now)) / 1000));
   const canvasLabel = d.running
     ? zh
@@ -126,6 +131,7 @@ export function ImageWorkbench({
         key={sessionId}
         sessionId={sessionId}
         references={d.draft.references}
+        referenceLimit={d.referenceLimit}
         artifacts={artifacts}
         sessionImages={d.sessionImages}
         lockedId={d.repaint?.id}
@@ -362,19 +368,10 @@ export function ImageWorkbench({
             zh={zh}
             select={d.selectVersion}
           />
-          {(d.workbench.error || d.selected?.error || d.notice) && (
-            <div className="mx-auto max-h-16 w-full max-w-2xl shrink-0 overflow-auto px-4 pb-2 text-ui-sm">
-              {d.workbench.error || d.selected?.error ? (
-                <p role="alert" className="text-destructive">
-                  {d.workbench.error ?? d.selected?.error?.message}
-                </p>
-              ) : (
-                <p role="status" className="break-all text-foreground-subtle">
-                  {d.notice}
-                </p>
-              )}
-            </div>
-          )}
+          <ImageEditorNotice
+            error={d.workbench.error ?? d.selected?.error?.message}
+            notice={d.capacityNotice ?? d.notice}
+          />
           <ImagePromptComposer
             sessionId={sessionId}
             prompt={d.draft.prompt}

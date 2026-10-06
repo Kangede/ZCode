@@ -9,6 +9,8 @@ import {
   IMAGE_CHUNK_BYTES,
   imageGenerationInputSchema,
   imageGenerationSettingsSchema,
+  getImageReferenceCapacity,
+  imageReferenceCapacityMessage,
   type ImageArtifact,
   type ImageGenerationInput,
   type ImageGenerationRequest,
@@ -227,6 +229,13 @@ export class ImageTaskService implements ImageGenerationPort {
         );
       return structuredClone(previous);
     }
+    // 重放先返回原任务；只限制新请求，并把自动插入的编辑目标计入数量。
+    const capacity = getImageReferenceCapacity(input);
+    if (capacity.exceeded)
+      throw new ImageGenerationError(
+        "reference_capacity_exceeded",
+        imageReferenceCapacityMessage(input.size, capacity.limit!),
+      );
     // Capture the resolved provider and secret once. Neither is written into the journal.
     const settings = { ...this.settings };
     const connection = this.options.connection(settings.providerId);

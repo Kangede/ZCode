@@ -16,6 +16,7 @@ export function ImageReferences({
   sessionImages,
   toggle,
   lockedId,
+  referenceLimit,
 }: {
   sessionId: string;
   references: string[];
@@ -28,6 +29,7 @@ export function ImageReferences({
   sessionImages: ImageArtifact[];
   toggle(id: string): void;
   lockedId?: string;
+  referenceLimit: number;
 }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [showSession, setShowSession] = useState(false);
@@ -42,12 +44,12 @@ export function ImageReferences({
     >
       <div className="mb-2 flex items-center justify-between text-ui-caption">
         <span>
-          {zh ? "参考图" : "References"} {references.length}/5
+          {zh ? "参考图" : "References"} {references.length}/{referenceLimit}
         </span>
         <Button
           size="sm"
           variant="ghost"
-          disabled={busy || references.length >= 5}
+          disabled={busy || references.length >= referenceLimit}
           onClick={() => fileInput.current?.click()}
         >
           <ImagePlus className="size-4" />
@@ -82,7 +84,7 @@ export function ImageReferences({
               disabled={
                 busy ||
                 artifact.id === lockedId ||
-                (!references.includes(artifact.id) && references.length >= 5)
+                (!references.includes(artifact.id) && references.length >= referenceLimit)
               }
               onClick={() => toggle(artifact.id)}
             >

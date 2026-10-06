@@ -14,12 +14,15 @@ const cases = [
     "tests/image-generation/provider-secrets.test.ts",
     "tests/image-generation/provider.test.ts",
     "tests/image-generation/repaint.test.ts",
+    "tests/image-generation/capacity.test.ts",
+    "tests/image-generation/capacity-runner.test.ts",
   ],
   ["scripts/test-image-generation-long.mjs"],
   ["--import", "tsx", "--test", "tests/image-generation/web.e2e.ts"],
   ["--import", "tsx", "--test", "tests/image-generation/desktop.e2e.ts"],
   ["--import", "tsx", "--test", "tests/image-generation/cli.e2e.ts"],
   ["--import", "tsx", "--test", "tests/image-generation/editor-layout.e2e.ts"],
+  ["--import", "tsx", "--test", "tests/image-generation/capacity.e2e.ts"],
 ];
 if (process.env.ZCODE_IMAGE_TEST_BASELINE)
   cases.push(["--import", "tsx", "--test", "tests/image-generation/mixed-versions.e2e.ts"]);

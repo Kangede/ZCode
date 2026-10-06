@@ -1,5 +1,5 @@
 import type { ImageGenerationInput } from "@zcode/shared/image-generation";
-import { IMAGE_ASPECT_RATIOS } from "@zcode/shared/image-generation";
+import { IMAGE_ASPECT_RATIOS, getImageReferenceLimit } from "@zcode/shared/image-generation";
 
 export const imageControlClass =
   "w-full min-w-0 rounded-lg border border-input-border bg-input px-3 py-2 text-mobile-input-safe text-foreground outline-none focus:border-input-border-focused disabled:opacity-50 sm:text-ui-base";
@@ -15,6 +15,7 @@ export function ImageControls({
   zh: boolean;
   regional?: boolean;
 }) {
+  const referenceLimit = getImageReferenceLimit(draft.size);
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
@@ -57,6 +58,13 @@ export function ImageControls({
           />
         </label>
       </div>
+      {referenceLimit !== undefined && (
+        <p className="text-ui-sm text-foreground-subtle" data-testid="image-reference-limit">
+          {zh
+            ? `此尺寸最多 ${referenceLimit} 张参考图，编辑目标计入数量。`
+            : `Up to ${referenceLimit} references at this size, including the edit target.`}
+        </p>
+      )}
       <datalist id="qwen-image-sizes">
         <option value="512x512" />
         <option value="1024x1024" />

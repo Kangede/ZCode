@@ -200,6 +200,48 @@ Qwen defaults and constraints:
 
 ## Compatibility and distribution
 
+### Resolution-dependent reference capacity (v3)
+
+The Qwen reference count must be bounded by measured output-resolution capacity,
+not just the API maximum of five. Qualification uses serial requests, 40 steps,
+CFG 1, CPU RNG, cache disabled, PNG, and distinct original reference images.
+Record the upstream model/version, input dimensions/hashes, seed, decoded output
+dimensions/hash, elapsed time, reported peak memory, and post-request health.
+Test square resolution tiers and all seven maximum aspect-ratio sizes, repeat
+the proposed safe boundary with different seeds, and include large references
+and regional edits. Stop a run on failure, uncertain completion, or exhausted
+memory headroom; never retry a generation automatically. Previously observed
+OOM cells are evidence, not mandatory destructive retests. Measurements cannot
+guarantee safety on another GPU, placement recipe, batching mode or workload.
+
+The shared contract will expose the qualified size/count policy. The session
+service remains the sole job owner and checks the effective references after
+parent resolution, before accepting new work; the Qwen adapter checks again
+before network I/O. Desktop/Web show the same limit and block submission with
+an actionable message. Draft images are never silently dropped or resized.
+The editing target counts once; the derived regional guide replaces it and
+does not consume another slot. Persisted jobs retain the original input schema
+so a stricter admission policy cannot break old history or reconnect snapshots.
+No protocol version, storage migration, queue owner or replay semantics change.
+The bundled tool guidance describes the limit for CLI/agent callers.
+
+The admission tiers use output pixels (width × height), not the longest side:
+up to 2,359,296: five references; up to 3,211,264: three;
+larger supported sizes: two. Generation with zero references keeps the existing
+size bounds. The policy is shared by admission, adapter, UI, and JSON tool-schema
+guidance, but is deliberately not a refinement on the persisted input schema.
+The high-resolution tier uses a uniform limit across all seven maximum aspect
+ratios: each has completed with two references, while the maximum-area three-
+reference request exits the tested upstream with OOM. The 1792-square tier has
+an observed four-reference OOM. Early memory screening thresholds are experiment
+controls, not the admission rule or a substitute for measuring the next count.
+
+Acceptance: boundary and above-boundary tests for every size tier; implicit
+parents; duplicate commands; zero upstream requests for rejected work; historical
+job parsing; UI changes of size with existing references; Web and Electron
+interaction; CLI errors; root/CLI type, lint and architecture checks. The final
+measured table and limitations belong in a separate qualification report.
+
 Live baseline findings: the desktop development package has no package version,
 so Electron reports `0.0` and electron-updater fails before a window opens. Apply
 the existing build version only for invalid development versions. Standalone Web

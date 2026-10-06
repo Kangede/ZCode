@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   imageGenerationSettingsSchema,
+  IMAGE_MAX_REFERENCES,
+  getImageReferenceCapacity,
+  imageReferenceCapacityMessage,
   type ImageGenerationInput,
   type ImageJob,
 } from "@zcode/shared/image-generation";
@@ -30,6 +33,11 @@ export function useImageWorkbenchDraft(sessionId: string, open: boolean, zh: boo
   const draftEpoch = useRef(0);
   const busy = workbench.pending || submitting;
   const [draft, setDraft] = useState<ImageGenerationInput>(freshDraft);
+  const capacity = getImageReferenceCapacity(draft);
+  const referenceLimit = capacity.limit ?? IMAGE_MAX_REFERENCES;
+  const capacityNotice = capacity.exceeded
+    ? imageReferenceCapacityMessage(draft.size, referenceLimit, zh)
+    : undefined;
   const [selectedId, setSelectedId] = useState<string>();
   const [comparisonId, setComparisonId] = useState<string>();
   const [zoom, setZoom] = useState(100);
@@ -94,13 +102,9 @@ export function useImageWorkbenchDraft(sessionId: string, open: boolean, zh: boo
     setSelectedId(job.id);
   };
   const upload = async (files: FileList | File[]) => {
-    const remaining = 5 - draft.references.length;
+    const remaining = referenceLimit - capacity.count;
     if (files.length > remaining) {
-      setNotice(
-        zh
-          ? "最多五张参考图，编辑目标也计入限制。"
-          : "At most five references, including the edit target.",
-      );
+      setNotice(imageReferenceCapacityMessage(draft.size, referenceLimit, zh));
       return;
     }
     if (submitLock.current) return;
@@ -129,6 +133,11 @@ export function useImageWorkbenchDraft(sessionId: string, open: boolean, zh: boo
 
   const submit = async () => {
     if (submitLock.current) return;
+    // 尺寸变化不会删除已选图片；在上传蒙版和提交之前要求用户处理超限草稿。
+    if (capacityNotice) {
+      setNotice(capacityNotice);
+      return;
+    }
     submitLock.current = true;
     setSubmitting(true);
     const epoch = draftEpoch.current;
@@ -198,7 +207,7 @@ export function useImageWorkbenchDraft(sessionId: string, open: boolean, zh: boo
   const toggleReference = (id: string) => {
     const index = draft.references.indexOf(id);
     if (index >= 0) remove(index);
-    else if (draft.references.length < 5)
+    else if (capacity.count < referenceLimit)
       change({ operation: "edit", references: [...draft.references, id] });
   };
   const stopRepaint = () => {
@@ -209,6 +218,9 @@ export function useImageWorkbenchDraft(sessionId: string, open: boolean, zh: boo
   return {
     workbench,
     draft,
+    capacity,
+    referenceLimit,
+    capacityNotice,
     change,
     selected,
     selectedId,

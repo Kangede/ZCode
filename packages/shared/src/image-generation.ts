@@ -34,6 +34,51 @@ export function validateImageSize(size: string): string {
   return family.label;
 }
 
+// A40 48 GB / BF16 / text-encoder layerwise offload, serial requests.
+// Keep hardware admission separate from schemas used to restore historical jobs.
+// 参考图按输出面积放大；按实测连续成功范围及更高档的失败边界准入。
+// 早期筛选用的显存停测线不是硬件上限。依据见 image-generation-capacity-acceptance.md。
+const IMAGE_REFERENCE_CAPACITY = [
+  { pixels: 1536 * 1536, references: 5 },
+  { pixels: 1792 * 1792, references: 3 },
+  { pixels: Infinity, references: 2 },
+] as const;
+const IMAGE_REFERENCE_CAPACITY_DESCRIPTION =
+  "Total references include the edit target. Limits by output pixel count: " +
+  IMAGE_REFERENCE_CAPACITY.map(
+    (tier) =>
+      `${Number.isFinite(tier.pixels) ? `up to ${tier.pixels} pixels` : "larger supported sizes"}: ${tier.references}`,
+  ).join("; ") +
+  ". Remove references or reduce size when over the limit.";
+
+export function getImageReferenceLimit(size: string): number | undefined {
+  try {
+    validateImageSize(size);
+  } catch {
+    return undefined;
+  }
+  const [width, height] = size.split("x").map(Number);
+  return IMAGE_REFERENCE_CAPACITY.find((tier) => width! * height! <= tier.pixels)!.references;
+}
+
+export function getImageReferenceCapacity(input: {
+  size: string;
+  references: readonly string[];
+  parentId?: string;
+}) {
+  const limit = getImageReferenceLimit(input.size);
+  const count =
+    input.references.length +
+    (input.parentId && !input.references.includes(input.parentId) ? 1 : 0);
+  return { limit, count, exceeded: limit !== undefined && count > limit };
+}
+
+export function imageReferenceCapacityMessage(size: string, limit: number, zh = false): string {
+  return zh
+    ? `${size} 最多支持 ${limit} 张参考图（含编辑目标）。请移除参考图或降低输出尺寸。`
+    : `${size} supports at most ${limit} reference images, including the edit target. Remove references or reduce the output size.`;
+}
+
 export const imageGenerationSettingsSchema = z.object({
   enabled: z.boolean().default(false),
   providerId: z.string().trim().min(1).optional(),
@@ -50,7 +95,11 @@ export const imageGenerationInputSchema = z
       .trim()
       .min(1)
       .max(64 * 1024),
-    references: z.array(z.string().min(1).max(32_768)).max(IMAGE_MAX_REFERENCES).default([]),
+    references: z
+      .array(z.string().min(1).max(32_768))
+      .max(IMAGE_MAX_REFERENCES)
+      .describe(IMAGE_REFERENCE_CAPACITY_DESCRIPTION)
+      .default([]),
     parentId: z.string().min(1).max(128).optional(),
     mask: z.string().min(1).max(32_768).optional(),
     size: z.string().default("1024x1024"),

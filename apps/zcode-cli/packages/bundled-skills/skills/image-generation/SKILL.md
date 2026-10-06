@@ -15,6 +15,13 @@ was opened in a terminal session.
   user-provided text. For edits state both the change and what must stay unchanged.
 - Reference up to five images in order as Picture 1 through Picture 5. Use returned
   image IDs or readable workspace files. The edit target counts as one image.
+- Respect the output-size safety limit, including an automatically inserted parent:
+  at most 5 references up to 2,359,296 pixels (1536x1536); 3 up to 3,211,264
+  (1792x1792); 2 at larger supported sizes, including 2048x2048
+  and the maximum non-square dimensions. These limits qualify
+  the current A40/offload deployment; the API maximum is not a VRAM guarantee.
+  If over the limit, ask the user to select fewer references or a lower output size;
+  never silently discard images, lower the requested size, or bypass the native tool.
 - For a narrow change, prefer only the target image. Add further references only
   when the user needs them, and describe each reference role. More references can
   change composition or object counts; inspect the result before claiming preservation.

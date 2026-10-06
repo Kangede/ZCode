@@ -8,6 +8,8 @@ import {
   IMAGE_REFERENCE_MAX_BYTES,
   IMAGE_RESPONSE_MAX_BYTES,
   imageGenerationInputSchema,
+  getImageReferenceCapacity,
+  imageReferenceCapacityMessage,
 } from "@zcode/shared/image-generation";
 import { decodeImageBase64, inspectImage, encodeImageJpeg } from "./binary.js";
 import { prepareRepaint } from "./repaint.js";
@@ -55,6 +57,13 @@ export function createQwenImageAdapter(http: HttpClientPort): ImageGenerationAda
   return {
     async generate(options) {
       const request = imageGenerationInputSchema.parse(options.request);
+      const capacity = getImageReferenceCapacity(request);
+      // 五图是协议上限，不是任意分辨率下的显存安全上限；独立调用适配器也必须拦截。
+      if (capacity.exceeded)
+        throw new ImageGenerationError(
+          "reference_capacity_exceeded",
+          imageReferenceCapacityMessage(request.size, capacity.limit!),
+        );
       if (!options.connection.apiKey)
         throw new ImageGenerationError(
           "missing_credentials",

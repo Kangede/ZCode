@@ -25,12 +25,17 @@ export async function mockImageProvider(apiKey = "fixture-only-secret", imageFix
         const body = JSON.parse(bytes.toString());
         const lastUser =
           body.messages?.findLastIndex((message: any) => message.role === "user") ?? -1;
+        const capacity =
+          lastUser >= 0 &&
+          JSON.stringify(body.messages[lastUser].content).includes("[native-capacity]");
         const repaint =
           lastUser >= 0 &&
           JSON.stringify(body.messages[lastUser].content).includes("[native-repaint]");
         const marker =
           lastUser >= 0 &&
-          (repaint || JSON.stringify(body.messages[lastUser].content).includes("[native-image]"));
+          (capacity ||
+            repaint ||
+            JSON.stringify(body.messages[lastUser].content).includes("[native-image]"));
         const handled = body.messages
           ?.slice(lastUser + 1)
           .some((message: any) => message.role === "tool");
@@ -42,7 +47,9 @@ export async function mockImageProvider(apiKey = "fixture-only-secret", imageFix
           body.messages?.filter((message: any) => message.role === "tool") ?? [],
         ).match(/\/[^"\s]+?\.png/)?.[0];
         const content = handled
-          ? `Generated image saved. ${toolPath ?? ""}`
+          ? capacity
+            ? `Image request rejected: ${JSON.stringify(body.messages?.filter((message: any) => message.role === "tool"))}`
+            : `Generated image saved. ${toolPath ?? ""}`
           : "Image acceptance session";
         const delta = native
           ? {
@@ -55,10 +62,11 @@ export async function mockImageProvider(apiKey = "fixture-only-secret", imageFix
                   function: {
                     name: "GenerateImage",
                     arguments: JSON.stringify({
-                      operation: repaint ? "edit" : "generate",
+                      operation: repaint || capacity ? "edit" : "generate",
                       ...(repaint ? { references: ["source.png"], mask: "mask.png" } : {}),
                       prompt: repaint ? "Make the selected part blue" : "Legacy image result",
-                      size: "512x512",
+                      ...(capacity ? { references: Array(5).fill("source.png") } : {}),
+                      size: capacity ? "2048x2048" : "512x512",
                       outputFormat: "png",
                     }),
                   },
