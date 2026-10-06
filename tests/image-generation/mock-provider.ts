@@ -4,12 +4,12 @@ import { createHash } from "node:crypto";
 import { Jimp } from "jimp";
 
 /** Actual HTTP fixture: the renderer must never contact this listener. */
-export async function mockImageProvider() {
+export async function mockImageProvider(apiKey = "fixture-only-secret") {
   const requests: Array<{ path: string; fields: Record<string, unknown>; references: string[] }> =
     [];
   const server = createServer(async (req, res) => {
     try {
-      if (req.headers.authorization !== "Bearer fixture-only-secret") {
+      if (req.headers.authorization !== `Bearer ${apiKey}`) {
         res.writeHead(401).end("Missing private fixture credential");
         return;
       }
@@ -25,9 +25,12 @@ export async function mockImageProvider() {
         const body = JSON.parse(bytes.toString());
         const lastUser =
           body.messages?.findLastIndex((message: any) => message.role === "user") ?? -1;
+        const repaint =
+          lastUser >= 0 &&
+          JSON.stringify(body.messages[lastUser].content).includes("[native-repaint]");
         const marker =
           lastUser >= 0 &&
-          JSON.stringify(body.messages[lastUser].content).includes("[native-image]");
+          (repaint || JSON.stringify(body.messages[lastUser].content).includes("[native-image]"));
         const handled = body.messages
           ?.slice(lastUser + 1)
           .some((message: any) => message.role === "tool");
@@ -52,8 +55,9 @@ export async function mockImageProvider() {
                   function: {
                     name: "GenerateImage",
                     arguments: JSON.stringify({
-                      operation: "generate",
-                      prompt: "Legacy image result",
+                      operation: repaint ? "edit" : "generate",
+                      ...(repaint ? { references: ["source.png"], mask: "mask.png" } : {}),
+                      prompt: repaint ? "Make the selected part blue" : "Legacy image result",
                       size: "512x512",
                       outputFormat: "png",
                     }),

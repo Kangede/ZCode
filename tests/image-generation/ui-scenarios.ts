@@ -16,6 +16,19 @@ export async function imageUiScenarios(h: Awaited<ReturnType<typeof uiHarness>>)
   }
   await page.getByTestId("image-workbench-open").click();
   await dialog.waitFor();
+  await page.getByRole("button", { name: "Add image provider", exact: true }).click();
+  await page.getByLabel("Image provider name", { exact: true }).fill("Independent Qwen");
+  await page
+    .getByLabel("Image provider URL", { exact: true })
+    .fill(`http://127.0.0.1:${h.provider.port}/v1`);
+  await page.getByLabel("Image provider API key", { exact: true }).fill("fixture-image-secret");
+  await page.getByRole("button", { name: "Save image provider", exact: true }).click();
+  await page.getByTestId("image-provider-form").waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Configure provider", exact: true }).click();
+  assert.equal(await page.getByLabel("Image provider API key", { exact: true }).inputValue(), "");
+  await page.getByLabel("Image provider name", { exact: true }).fill("Independent Qwen saved");
+  await page.getByRole("button", { name: "Save image provider", exact: true }).click();
+  await page.getByTestId("image-provider-form").waitFor({ state: "hidden" });
   const enabled = page.getByTestId("image-enabled");
   if (!(await enabled.isChecked())) await enabled.click();
   await page.waitForFunction(
@@ -101,6 +114,8 @@ export async function imageUiScenarios(h: Awaited<ReturnType<typeof uiHarness>>)
   await page.getByRole("button", { name: "Cancel request", exact: true }).click();
   await page.getByRole("button", { name: "V6 · cancelled", exact: true }).waitFor();
   await h.screenshot("cancelled");
+  await conversationReferenceAndRepaint(h, original);
+  await page.getByTestId("image-prompt").fill("Next image draft");
   await page.emulateMedia({ colorScheme: "light" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(() => {
@@ -130,6 +145,27 @@ export async function imageUiScenarios(h: Awaited<ReturnType<typeof uiHarness>>)
   await page.emulateMedia({ colorScheme: "dark" });
   await page.waitForFunction(() => document.documentElement.classList.contains("dark"));
   await h.screenshot("mobile-dark");
+  await page.getByRole("button", { name: "Repaint area", exact: true }).click();
+  const touchCanvas = page.getByTestId("image-mask-canvas");
+  await touchCanvas.scrollIntoViewIfNeeded();
+  const touchBox = (await touchCanvas.boundingBox())!;
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: touchBox.x + touchBox.width / 2, y: touchBox.y + touchBox.height / 2 }],
+  });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.getByTestId("image-prompt").fill("Touch selection draft");
+  await page.waitForFunction(
+    () => !(document.querySelector('[data-testid="image-submit"]') as HTMLButtonElement)?.disabled,
+  );
+  await touchCanvas.scrollIntoViewIfNeeded();
+  await h.screenshot("mobile-touch-selection");
+  await page.getByRole("button", { name: "Clear selection", exact: true }).click();
+  await page.waitForFunction(
+    () => (document.querySelector('[data-testid="image-submit"]') as HTMLButtonElement)?.disabled,
+  );
+  await cdp.detach();
   assert.equal(
     h.browserRequests.some((url) => url.includes(`:${h.provider.port}/`)),
     false,
@@ -137,4 +173,94 @@ export async function imageUiScenarios(h: Awaited<ReturnType<typeof uiHarness>>)
   );
   assert.deepEqual(h.leakedCredentials, [], "upstream secrets must remain on the Host");
   assert.deepEqual(h.consoleErrors, [], "fresh renderer must have no uncaught errors");
+  assert.equal(
+    h.chatProvider.requests.length,
+    0,
+    "image jobs must never use the conversation provider",
+  );
+}
+
+async function conversationReferenceAndRepaint(
+  h: Awaited<ReturnType<typeof uiHarness>>,
+  original: Buffer,
+) {
+  const { page } = h;
+  await page.getByRole("button", { name: "New image", exact: true }).click();
+  await page.getByRole("button", { name: "Choose from conversation", exact: true }).click();
+  await page.getByRole("button", { name: "Select V3", exact: true }).click();
+  await page.getByRole("button", { name: "Select V1", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Select V4", exact: true }).count(), 0);
+  await page.getByText("Picture 1: V3", { exact: true }).waitFor();
+  await page.getByText("Picture 2: V1", { exact: true }).waitFor();
+  await page.getByTestId("image-size").fill("512x512");
+  await page.getByTestId("image-prompt").fill("Use Picture 1 with Picture 2 as a color reference");
+  await h.screenshot("conversation-references");
+  await page.getByTestId("image-submit").click();
+  await page.getByRole("button", { name: "V7 · succeeded", exact: true }).waitFor();
+  assert.equal(h.provider.requests[6]!.references.length, 2);
+  assert.equal(
+    h.provider.requests[6]!.references[1],
+    createHash("sha256").update(original).digest("hex"),
+  );
+  await page.getByRole("button", { name: "V1 · succeeded", exact: true }).click();
+  await page.getByRole("button", { name: "Repaint area", exact: true }).click();
+  await page.getByTestId("image-prompt").fill("Make only the selected part blue");
+  assert.equal(await page.getByTestId("image-size").isDisabled(), true);
+  assert.equal(await page.getByTestId("image-submit").isDisabled(), true);
+  const canvas = page.getByTestId("image-mask-canvas");
+  await canvas.waitFor();
+  await canvas.focus();
+  await page.keyboard.press("Space");
+  await page.getByLabel("Brush size", { exact: true }).fill("16");
+  await page.getByRole("button", { name: "Eraser", exact: true }).click();
+  await canvas.focus();
+  await page.keyboard.press("Space");
+  await page.waitForFunction(
+    () => (document.querySelector('[data-testid="image-submit"]') as HTMLButtonElement)?.disabled,
+  );
+  await page.getByRole("button", { name: "Undo stroke", exact: true }).click();
+  await page.waitForFunction(
+    () => !(document.querySelector('[data-testid="image-submit"]') as HTMLButtonElement)?.disabled,
+  );
+  await page.getByRole("button", { name: "Undo stroke", exact: true }).click();
+  await page.waitForFunction(
+    () => (document.querySelector('[data-testid="image-submit"]') as HTMLButtonElement)?.disabled,
+  );
+  assert.equal(await page.getByTestId("image-submit").isDisabled(), true);
+  await page.getByRole("button", { name: "Brush", exact: true }).click();
+  await page.getByLabel("Zoom", { exact: true }).fill("75");
+  await page.getByLabel("Brush size", { exact: true }).fill("10");
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.5);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.5, { steps: 12 });
+  await page.mouse.up();
+  await h.screenshot("painted-selection");
+  assert.equal(
+    await page.getByRole("button", { name: "Picture 1 remove", exact: true }).isDisabled(),
+    true,
+  );
+  await page.getByTestId("image-submit").click();
+  await page.getByRole("button", { name: "V8 · succeeded", exact: true }).waitFor();
+  const repainted = await Jimp.read(await h.downloadedBytes());
+  const source = await Jimp.read(original);
+  assert.equal(repainted.getPixelColor(256, 256), 0x2255ddff);
+  for (let y = 0; y < 512; y++)
+    for (let x = 0; x < 512; x++) {
+      if (x >= 170 && x <= 340 && y >= 220 && y <= 292) continue;
+      assert.equal(
+        repainted.getPixelColor(x, y),
+        source.getPixelColor(x, y),
+        `Unselected pixel ${x},${y}`,
+      );
+    }
+  await h.screenshot("repaint-completed");
+  await page.reload();
+  await page.getByTestId("image-workbench-open").click();
+  await page.getByRole("button", { name: "V8 · succeeded", exact: true }).waitFor();
+  assert.equal(h.provider.requests.length, 8);
+  assert.equal(
+    await page.getByLabel("Image provider", { exact: true }).locator("option:checked").innerText(),
+    "Independent Qwen saved",
+  );
 }

@@ -21,10 +21,13 @@ export async function uiHarness(
     await mkdir(join(home, ".zcode/cli"), { recursive: true });
     await writeFile(
       join(home, ".zcode/cli/config.json"),
-      JSON.stringify({ imageGeneration: { enabled: true } }),
+      JSON.stringify({ imageGeneration: { enabled: true, providerId: "image-fixture" } }),
     );
   }
-  const provider = await mockImageProvider();
+  const provider = await mockImageProvider(
+    options.nativeEnabled ? "fixture-only-secret" : "fixture-image-secret",
+  );
+  const chatProvider = options.nativeEnabled ? provider : await mockImageProvider();
   const providerFile = join(settings, "provider_config.json");
   await writeFile(
     providerFile,
@@ -43,7 +46,7 @@ export async function uiHarness(
                 access: { type: "api-key", apiKey: "fixture-only-secret" },
                 api: {
                   type: "openai-chat-completions",
-                  baseUrl: `http://127.0.0.1:${provider.port}/v1`,
+                  baseUrl: `http://127.0.0.1:${chatProvider.port}/v1`,
                 },
                 personalModelIds: ["fixture-chat"],
               },
@@ -122,7 +125,11 @@ export async function uiHarness(
     target.on("request", (request) => browserRequests.push(request.url()));
     target.on("websocket", (socket) => {
       socket.on("framereceived", (event) => {
-        if (String(event.payload).includes("fixture-only-secret"))
+        if (
+          ["fixture-only-secret", "fixture-image-secret"].some((key) =>
+            String(event.payload).includes(key),
+          )
+        )
           leakedCredentials.push("received upstream secret");
       });
     });
@@ -259,6 +266,7 @@ export async function uiHarness(
       directory,
       workspace,
       provider,
+      chatProvider,
       consoleErrors,
       leakedCredentials,
       browserRequests,
@@ -284,6 +292,7 @@ export async function uiHarness(
         await closeBrowser?.();
         child?.kill();
         await provider.close();
+        if (chatProvider !== provider) await chatProvider.close();
       },
       async screenshot(name: string) {
         await page.screenshot({
@@ -306,6 +315,7 @@ export async function uiHarness(
     child?.kill();
     await closeBrowser?.();
     await provider.close();
+    if (chatProvider !== provider) await chatProvider.close();
     throw error;
   }
 }

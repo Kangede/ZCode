@@ -1,6 +1,6 @@
 # Qwen 图像画布使用与维护
 
-本 fork 在官方 ZCode 3.14.3 / `29628c9` 上增加可关闭的原生图像工具、系统 Skill 和共享画布。桌面与 Web 使用同一个界面，CLI/TUI 使用同一个会话任务服务。蒙版与涂抹重绘不在本版范围内。
+本 fork 在官方 ZCode 3.14.3 / `29628c9` 上增加可关闭的原生图像工具、系统 Skill 和共享画布。桌面与 Web 使用同一个界面，CLI/TUI 使用同一个会话任务服务。支持涂抹局部重绘、会话图片引用和独立生图服务配置。
 
 ## 安装与启用
 
@@ -9,7 +9,7 @@ Linux 桌面包位于 `dist/image-desktop/`，使用独立的 ZCode Preview 身�
 定制包默认数据根为 `~/.zcode-profiles/qwen-image/`，其中 `.zcode/` 保存数据。已有显式 ZCODE 路径配置优先；不要把它们指向官方数据目录，除非确实希望共享数据。源码开发与普通官方构建保持原来的目录规则。
 
 1. 在 ZCode 的服务商设置中配置自己的代理地址和密钥，选择对话模型，例如 `glm-5.3`。
-2. 点击“新建图像”，打开“启用生图”。默认使用当前会话的服务商，也可选择独立生图服务商。
+2. 点击“新建图像”，打开“启用生图”。点击“添加生图服务”，单独填写名称、地址和 API key，或明确选择已配置的服务。生图不再跟随会话模型。
 3. 模型别名默认为 `Qwen-Image-2.1`。代理须公开 `/v1/models` 和 Images API，并为当前密钥授权生图。
 4. 直接填写面板，或关闭面板后用自然语言要求生成图片。自然语言操作使用现有工具权限机制；审批后自动打开画布。
 
@@ -19,23 +19,32 @@ CLI 单独使用时，可在默认 CLI 配置文件中合并以下片段。定�
 {
   "imageGeneration": {
     "enabled": true,
+    "providerId": "your-image-provider-id",
     "model": "Qwen-Image-2.1",
     "timeoutMs": 1200000
   }
 }
 ```
 
-省略 `providerId` 表示跟随会话；设置为 ZCode 中已有的 Provider ID 可固定服务。配置文件中显式提供的字段在新会话启动时优先于画布保存的选项。关闭功能可取消画布勾选；若配置文件显式启用，还需把其中 `enabled` 改为 `false`。关闭后仍能查看历史图片。
+`providerId` 必须指向 ZCode 中已配置的 API-key Provider；省略时提示配置错误，不自动使用聊天服务。旧会话需在画布中明确选择一次；独立服务配置可供其它会话选择。配置文件中显式提供的字段在新会话启动时优先于画布保存的选项。关闭功能可取消画布勾选；若配置文件显式启用，还需把其中 `enabled` 改为 `false`。关闭后仍能查看历史图片。
 
 ## 调整与导出
 
-选择完成的版本，点击“继续调整”，再填写变化要求。编辑目标占一个参考图名额，总计最多五张；Picture 1–5 对应提交时的顺序。可上传、拖放、移除和排序参考图。每次编辑保留旧版本；选定任意旧版本可重新开始编辑。
+选择完成的版本，点击“继续调整”，再填写变化要求。编辑目标占一个参考图名额，总计最多五张；Picture 1–5 对应提交时的顺序。可上传、拖放、移除和排序参考图，也可点击“从会话图片选择”选择本会话任意已完成图片，按点击顺序加入，不重复上传。每次编辑保留旧版本；选定任意旧版本可重新开始编辑。
 
 参数变化只修改草稿，点击“生成图片”或“应用调整”后才提交。输出默认为 1024×1024、40 步、CPU 随机数生成、Cache-DiT 关闭。种子留空时，生成使用 42，编辑选择不同于已知参考图种子的新值。尺寸须为 32 的倍数，并属于七种支持的比例。引导强度超过 1 时须填写负面提示词。
 
 透明背景只支持 PNG。普通图片中的零星 Alpha 像素不会被当成移除背景的指令；透明版本的后续编辑会继承原请求的透明设置。当前上游直接输出 JPEG 会触发 `cannot write mode RGBA as JPEG`，因此 Qwen 适配器固定请求一次 PNG，再按指定质量在 Host 合成白底并编码 JPEG，默认质量 90（界面中的 0 映射为编码器最低质量 1）；结果元数据记录此处理。参考图始终使用原始字节。
 
 “下载”保存到客户端；“导出到项目”写入会话工作区的 `output/qwen-image/`，使用唯一文件名。已保存的密钥在设置读取中显示为掩码，保留掩码即可保留原值，输入新值或清空可替换或删除密钥。网络请求与密钥只在 Host 上处理，浏览器通过既有连接读取图片产物。CLI/TUI 返回文件路径、图像 ID 和元数据。
+
+## 涂抹局部重绘
+
+选中已完成图片，点击“涂抹重绘”，用画笔选中要修改的区域，然后填写调整说明并点击“应用调整”。支持触屏、画笔大小、橡皮擦、撤销、清空；键盘方向键移动画笔，空格涂抹。缩放不会改变选区在原图中的位置。选区为空时不能提交；新建图片或更换编辑目标会清空选区。
+
+局部重绘固定原图尺寸并输出 PNG，编辑目标锁定为 Picture 1，还可从会话添加其它参考图。当前代理不支持原生扩散蒙版，因此 ZCode 给 Qwen 提供选区标记，并在 Host 按蒙版合成返回结果。未涂抹区域的 RGBA 像素保持原样；选区内的生成质量仍需查看结果。每次重绘生成新版本，旧图和原始参考文件保留。
+
+CLI 的 `GenerateImage` 支持 `mask` 参数，值为本会话导入的蒙版 ID 或工作区内的 PNG 路径；蒙版必须与目标同尺寸，透明处重绘，不透明处保留。原来的无蒙版编辑保持可用。连接旧版生图 Host 时隐藏涂抹按钮。
 
 ## 取消、恢复与故障
 
@@ -58,7 +67,9 @@ pnpm test:image-generation:all
 
 `test:image-generation:compatibility` 在设置 `ZCODE_IMAGE_TEST_BASELINE` 后连接已构建的官方基线 Host/前端，验证新旧两向互操作。
 
-专项入口包括 `test:image-generation`（契约/服务/资源）、`test:image-generation:long`（真实等待 310 秒）、`test:image-generation:web`、`test:image-generation:desktop`。自动 UI 测试使用本机模拟服务和全新隔离目录，保存 DOM、请求、下载及截图；文件选择器和桌面保存对话框由自动化提供路径，文件读写与哈希核对真实执行。
+专项入口包括 `test:image-generation`（契约/服务/资源）、`test:image-generation:long`（真实等待 310 秒）、`test:image-generation:web`、`test:image-generation:desktop`、`test:image-generation:cli`。自动 UI 测试使用本机模拟服务和全新隔离目录，保存 DOM、请求、下载及截图；文件选择器和桌面保存对话框由自动化提供路径，文件读写与哈希核对真实执行。
+
+局部重绘实测入口为 `node --import tsx scripts/verify-image-repaint-live.ts --connection PRIVATE.json --reference SOURCE.png --mask MASK.png --prompt TEXT --output NEW_DIRECTORY`。输出目录必须尚不存在，以免误重试。脚本校验选区外每个 RGBA 像素并记录选区内变化数量；生成内容仍需人工视觉核对。本次结果见 [局部重绘验收记录](image-generation-v2-acceptance.md)。
 
 对发行包运行相同 UI 测试：`ZCODE_IMAGE_TEST_DISTRIBUTION` 指向解压后的 `zcode` 目录，`ZCODE_IMAGE_TEST_ELECTRON` 指向桌面可执行文件。`ZCODE_IMAGE_TEST_BROWSER` 可选择已安装的浏览器通道，默认 Chrome。测试运行结果保存到 `.evidence/automated/`。
 
