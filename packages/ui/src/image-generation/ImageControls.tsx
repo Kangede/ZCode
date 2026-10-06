@@ -8,10 +8,12 @@ export function ImageControls({
   draft,
   change,
   zh,
+  regional = false,
 }: {
   draft: ImageGenerationInput;
   change: (patch: Partial<ImageGenerationInput>) => void;
   zh: boolean;
+  regional?: boolean;
 }) {
   return (
     <div className="space-y-3">
@@ -29,6 +31,7 @@ export function ImageControls({
           {zh ? "宽高比" : "Aspect ratio"}
           <select
             className={imageControlClass}
+            disabled={regional}
             aria-label={zh ? "宽高比" : "Aspect ratio"}
             value={String(nearestRatio(draft.size))}
             onChange={(event) => {
@@ -55,6 +58,7 @@ export function ImageControls({
           {zh ? "尺寸" : "Size"}
           <input
             className={imageControlClass}
+            disabled={regional}
             data-testid="image-size"
             value={draft.size}
             onChange={(event) => change({ size: event.target.value })}
@@ -77,6 +81,7 @@ export function ImageControls({
           {zh ? "格式" : "Format"}
           <select
             className={imageControlClass}
+            disabled={regional}
             value={draft.outputFormat}
             onChange={(event) =>
               change({

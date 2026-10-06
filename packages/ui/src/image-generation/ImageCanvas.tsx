@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useImageArtifactUrl } from "@/hooks/useImageWorkbench.js";
 import type { ImageArtifact } from "@zcode/shared/image-generation";
@@ -10,6 +10,7 @@ export function ImageCanvas({
   size,
   zoom,
   label,
+  overlay,
 }: {
   sessionId: string;
   artifact?: ImageArtifact;
@@ -17,6 +18,7 @@ export function ImageCanvas({
   size: string;
   zoom: number;
   label: string;
+  overlay?: ReactNode;
 }) {
   const { url, error } = useImageArtifactUrl(
     sessionId,
@@ -43,12 +45,12 @@ export function ImageCanvas({
   return (
     <div
       ref={container}
-      className="flex min-h-64 flex-1 items-center justify-center overflow-auto rounded-xl border border-border bg-background p-4"
+      className="flex min-h-64 flex-1 items-start justify-start overflow-auto rounded-xl border border-border bg-background p-4"
       data-testid="image-canvas"
       aria-busy={pending}
     >
       <div
-        className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-[repeating-conic-gradient(var(--color-surface)_0%_25%,var(--color-background)_0%_50%)] bg-size-[16px_16px]"
+        className="relative m-auto flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-[repeating-conic-gradient(var(--color-surface)_0%_25%,var(--color-background)_0%_50%)] bg-size-[16px_16px]"
         style={{ width: fittedWidth, height: fittedWidth / ratio }}
       >
         {url ? (
@@ -64,6 +66,7 @@ export function ImageCanvas({
             <span>{error ?? label}</span>
           </div>
         )}
+        {url && overlay}
       </div>
     </div>
   );
