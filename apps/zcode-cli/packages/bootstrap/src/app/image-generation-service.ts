@@ -1,7 +1,6 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 import {
   ImageGenerationError,
-  type ImageGenerationBinary,
   type ImageGenerationConnection,
   type ImageGenerationPort,
   type TraceContext,
@@ -17,7 +16,7 @@ import {
   type ImageGenerationSettings,
   type ImageJob,
 } from "@zcode/shared/image-generation";
-import { inspectImage } from "@zcode/adapters/image-generation";
+import { resolveImageTaskInput } from "./image-task-input.js";
 
 import { ImageTaskArtifacts, describeRecentImageJobs } from "./image-task-artifacts.js";
 
@@ -99,6 +98,7 @@ export class ImageTaskService implements ImageGenerationPort {
     switch (request.action) {
       case "list":
         return structuredClone({
+          capabilities: { maskEditing: true },
           settings: this.settings,
           jobs: [...this.jobs.values()].sort((a, b) => a.createdAt - b.createdAt),
           references: [...this.references.values()],
@@ -278,37 +278,13 @@ export class ImageTaskService implements ImageGenerationPort {
       job.status = "running";
       job.updatedAt = Date.now();
       await this.options.journal.writeJob(job);
-      const input = { ...job.input, references: [...job.input.references] };
-      if (input.parentId && !input.references.includes(input.parentId))
-        input.references.unshift(input.parentId);
-      if (input.references.length > 5)
-        throw new ImageGenerationError(
-          "invalid_references",
-          "At most five reference images, including the edit target",
-        );
-      const knownSeeds = new Set<number>();
-      const images: ImageGenerationBinary[] = [];
-      for (const reference of input.references) {
-        const artifact = this.findArtifact(reference);
-        if (artifact?.seed !== undefined) knownSeeds.add(artifact.seed);
-        images.push(
-          await inspectImage(
-            artifact
-              ? await this.binaries.read(artifact)
-              : await this.options.journal.readWorkspaceImage(reference),
-          ),
-        );
-      }
-      if (input.seed === undefined) {
-        input.seed = input.operation === "generate" ? 42 : randomBytes(4).readUInt32LE();
-        while (knownSeeds.has(input.seed)) input.seed = (input.seed + 1) >>> 0;
-      }
-      // Alpha 像素是文件事实，不等于用户要求移除整个背景；只继承编辑目标的请求意图。
-      const targetJob = this.jobs.get(input.parentId ?? input.references[0] ?? "");
-      input.background ??=
-        input.operation === "edit" ? (targetJob?.input.background ?? "auto") : "auto";
-      if (input.outputFormat === "jpeg") input.outputCompression ??= 90;
-      job.input = imageGenerationInputSchema.parse(input);
+      const { input, references, mask } = await resolveImageTaskInput(job, {
+        artifact: (id) => this.findArtifact(id),
+        job: (id) => this.jobs.get(id),
+        read: (artifact) => this.binaries.read(artifact),
+        readWorkspace: (path) => this.options.journal.readWorkspaceImage(path),
+      });
+      job.input = input;
       if (controller.signal.aborted)
         throw new ImageGenerationError("cancelled", "Image request cancelled");
       const image = await this.options.adapter.generate({
@@ -316,7 +292,8 @@ export class ImageTaskService implements ImageGenerationPort {
         connection,
         model: settings.model,
         timeoutMs: settings.timeoutMs,
-        references: images,
+        references,
+        mask,
         signal: controller.signal,
         trace,
       });

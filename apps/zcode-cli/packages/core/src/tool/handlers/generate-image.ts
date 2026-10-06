@@ -11,7 +11,7 @@ export const generateImageToolEntry: ToolEntry = {
   metadata: {
     name: IMAGE_GENERATION_TOOL_NAME,
     description:
-      "Generate a new image or edit existing images with Qwen-Image-2.1. Use this tool for image creation and image adjustments. Read the image-generation skill for prompting guidance. Reference images by returned image ID or workspace file path, in Picture 1–5 order. For edits use a previous job ID as parentId. Desktop and Web show images in the native workbench; terminal sessions receive file paths only; do not read their Base64 into context or claim visual inspection without a vision tool. Never run a separate shell image client when this tool is available.",
+      "Generate a new image or edit existing images with Qwen-Image-2.1. Use this tool for image creation and image adjustments. Read the image-generation skill for prompting guidance. Reference images by returned image ID or workspace file path, in Picture 1–5 order. For edits use a previous job ID as parentId. For regional edits provide mask as a same-size PNG artifact ID or workspace path: transparent mask pixels are edited, opaque pixels are preserved; keep the target as Picture 1 and use original size with PNG output. Desktop and Web show images in the native workbench; terminal sessions receive file paths only; do not read their Base64 into context or claim visual inspection without a vision tool. Never run a separate shell image client when this tool is available.",
     readOnly: false,
     destructive: false,
     concurrentSafe: false,

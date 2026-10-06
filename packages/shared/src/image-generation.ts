@@ -52,6 +52,7 @@ export const imageGenerationInputSchema = z
       .max(64 * 1024),
     references: z.array(z.string().min(1).max(32_768)).max(IMAGE_MAX_REFERENCES).default([]),
     parentId: z.string().min(1).max(128).optional(),
+    mask: z.string().min(1).max(32_768).optional(),
     size: z.string().default("1024x1024"),
     seed: z.number().int().min(0).max(0xffffffff).optional(),
     background: z.enum(["auto", "transparent"]).optional(),
@@ -76,6 +77,13 @@ export const imageGenerationInputSchema = z
       issue("Editing requires a reference image", "references");
     if (input.operation === "generate" && (input.references.length || input.parentId))
       issue("Use edit for reference images", "references");
+    if (input.mask) {
+      if (input.operation !== "edit") issue("A mask requires an edit", "mask");
+      if (input.outputFormat !== "png")
+        issue("Regional edits require PNG to preserve exterior pixels", "outputFormat");
+      if (input.parentId && input.references.length && input.references[0] !== input.parentId)
+        issue("The masked edit target must be Picture 1", "references");
+    }
     if (input.background === "transparent" && input.outputFormat !== "png")
       issue("Transparency requires PNG", "outputFormat");
     if (input.guidanceScale > 1 && !input.negativePrompt)
@@ -176,6 +184,7 @@ export const imageGenerationRequestSchema = z.discriminatedUnion("action", [
 ]);
 export type ImageGenerationRequest = z.infer<typeof imageGenerationRequestSchema>;
 export const imageGenerationReplySchema = z.object({
+  capabilities: z.object({ maskEditing: z.boolean() }).optional(),
   settings: imageGenerationSettingsSchema.optional(),
   jobs: z.array(imageJobSchema).optional(),
   job: imageJobSchema.optional(),

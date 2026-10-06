@@ -34,6 +34,7 @@ export interface ImageGenerationAdapter {
     model: string;
     timeoutMs: number;
     references: ImageGenerationBinary[];
+    mask?: ImageGenerationBinary;
     signal?: AbortSignal;
     trace?: TraceContext;
   }): Promise<ImageGenerationBinary>;

@@ -10,6 +10,7 @@ import {
   imageGenerationInputSchema,
 } from "@zcode/shared/image-generation";
 import { decodeImageBase64, inspectImage, encodeImageJpeg } from "./binary.js";
+import { prepareRepaint } from "./repaint.js";
 
 export function normalizeImagesBaseUrl(value: string): string {
   const url = new URL(value);
@@ -69,14 +70,20 @@ export function createQwenImageAdapter(http: HttpClientPort): ImageGenerationAda
         );
       }
       const baseUrl = normalizeImagesBaseUrl(options.connection.baseUrl);
+      if (Boolean(request.mask) !== Boolean(options.mask))
+        throw new ImageGenerationError("invalid_mask", "The edit mask is missing or unexpected");
+      const repaint = options.mask
+        ? await prepareRepaint(options.references[0], options.mask, request.size)
+        : undefined;
+      const prompt = repaint ? repaint.instruction + request.prompt : request.prompt;
       const authorization = `Bearer ${options.connection.apiKey}`;
       const fields = {
         model: options.model,
         prompt:
           request.background === "transparent"
-            ? `This is an RGBA image with transparency. ${request.prompt}\nThe image has an alpha channel and a transparent background.`
+            ? `This is an RGBA image with transparency. ${prompt}\nThe image has an alpha channel and a transparent background.`
             : // 普通 PNG 的边缘 Alpha 不代表抠图意图；提及 transparency 会误导上游移除背景。
-              request.prompt,
+              prompt,
         n: 1,
         size: request.size,
         num_inference_steps: 40,
@@ -98,7 +105,8 @@ export function createQwenImageAdapter(http: HttpClientPort): ImageGenerationAda
         for (const [name, value] of Object.entries(fields)) {
           if (value !== undefined) form.append(name, String(value));
         }
-        for (const [index, reference] of options.references.entries()) {
+        for (const [index, originalReference] of options.references.entries()) {
+          const reference = index === 0 && repaint ? repaint.reference : originalReference;
           if (reference.bytes.length > IMAGE_REFERENCE_MAX_BYTES)
             throw new ImageGenerationError("reference_too_large", "Reference image exceeds 50 MiB");
           form.append(
@@ -185,15 +193,16 @@ export function createQwenImageAdapter(http: HttpClientPort): ImageGenerationAda
           "Generated image dimensions or format do not match the request",
         );
       }
-      if (request.background === "transparent" && !image.transparent) {
+      const result = repaint ? await repaint.composite(image) : image;
+      if (request.background === "transparent" && !result.transparent) {
         throw new ImageGenerationError(
           "missing_transparency",
           "The generated image has no transparent pixels; retry explicitly or adjust the prompt",
         );
       }
       return request.outputFormat === "jpeg"
-        ? encodeImageJpeg(image, request.outputCompression ?? 90)
-        : image;
+        ? encodeImageJpeg(result, request.outputCompression ?? 90)
+        : result;
     },
   };
 }

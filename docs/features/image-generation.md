@@ -1,21 +1,87 @@
 # Native image generation (v1)
 
-Status: implementation in progress. Baseline: upstream 29628c9, ZCode 3.14.3.
+Status: implemented; regional editing extension validated 2026-10-06. Baseline: upstream 29628c9, ZCode 3.14.3.
 
 ## Product contract
 
 An optional native `GenerateImage` tool and a bundled `image-generation` skill
 provide generation and ordered-reference editing through an authenticated Images
 API. Desktop and Web share a workbench. CLI/TUI use the same execution service.
-The initial adapter is Qwen-Image-2.1. This feature does not implement masks,
-regional repainting, a new agent loop, or proxy-side model orchestration.
+The initial adapter is Qwen-Image-2.1. Regional repainting uses a PNG alpha mask,
+visual selection guidance and Host-side compositing; no agent-loop or proxy-side
+model orchestration changes are required.
 
-Existing configurations remain disabled. Enabling the feature defaults to the
-current session provider; a dedicated provider can be selected. Provider
+Existing configurations remain disabled. Image generation requires an explicitly
+selected provider and never resolves the current conversation provider. Provider
 credentials stay in the agent process. A request captures its provider before
 execution; changing the conversation model cannot redirect an in-flight request.
 The provider must be configured for API-key access. Account-only access without
 an Images credential produces an actionable configuration error, not a fallback.
+
+## Regional editing, session references and independent providers (v2)
+
+- The workbench can create/edit an independent API-key provider (name, base URL,
+  key) through the existing environment-scoped ProviderSettings facade. The
+  registry remains the sole credential owner; no key is put in image journals.
+  Creating an image provider adds no chat model. Its ID is selected explicitly
+  from the registry service's validated configuration snapshot. The chat-model
+  registry excludes providers with no chat models and is not the image connection
+  source. Enabled status and provider validation issues still gate image access.
+  The settings picker uses these same connection criteria, not chat executability.
+  in image settings (saved defaults for new sessions; the existing session owner keeps its effective settings). Missing/deleted providers fail before HTTP; legacy
+  settings without providerId require selection once, never silently inherit a
+  conversation provider. Model alias and request budget remain image settings.
+- The reference picker shows all successful generated images in this session,
+  including agent-origin images and older branches. It uses saved artifact IDs
+  and previews, not reuploads or conversation text. Multi-select appends in click
+  order, deduplicates, respects five total references, supports removal/reordering,
+  and is isolated by session. Failed or incomplete jobs cannot be selected.
+- Repaint selects a saved version as Picture 1. A scaled/zoomed canvas supports
+  pointer/touch brushing, erasing, undo and clearing, with keyboard brush position
+  and painting. Brush strokes are local draft state tied to that target. Changing
+  the target/new image/session clears the selection. Empty selections cannot submit.
+- On submit, the UI exports an original-size PNG alpha mask through the existing
+  chunk import path, then submits `mask` (a session artifact ID) in the same image
+  command. Transparent mask pixels mean repaint; opaque pixels mean preserve.
+  CLI tools may use a workspace-local PNG mask path through the existing path
+  boundary. Masks must match Picture 1 and requested dimensions; edits keep the
+  original size and output PNG. Invalid/opaque masks fail before HTTP.
+- Qwen's current Images API does not accept a mask part. The adapter highlights
+  the selected region in a derived first reference and adds region instructions;
+  original reference files stay untouched. After one edit request, it composites
+  the result into the original using mask alpha, preserving every unselected RGBA
+  pixel exactly. Soft edges use premultiplied alpha blending. Model quality within
+  the selection is not guaranteed, and this is not native diffusion inpainting.
+- The service owns accepted mask IDs, input, parent history and terminal state.
+  Cancel/restart/late-result behavior is unchanged; upload alone does not enqueue
+  a generation. Local controls are frozen while mask upload and submission run.
+  List replies advertise optional `capabilities.maskEditing`; clients hide repaint
+  against older image Hosts. Existing inputs without mask retain their behavior.
+
+```mermaid
+sequenceDiagram
+  participant UI as Desktop/Web draft
+  participant Registry as Provider registry
+  participant Owner as Session image owner
+  participant Adapter as Qwen adapter
+  UI->>Registry: Save independent connection through Settings facade
+  UI->>Owner: Import original-size mask (ordered chunks)
+  UI->>Owner: Submit command ID + target/reference IDs + mask ID
+  Owner->>Registry: Resolve explicit provider and capture credentials
+  Owner->>Owner: Persist queued job; resolve and validate artifacts
+  Owner->>Adapter: Single edit with signal and trace
+  Adapter->>Adapter: Guide selected area; composite unchanged exterior
+  Adapter-->>Owner: Original-size PNG
+  Owner->>Owner: Persist artifact then success unless cancelled
+  Owner-->>UI: Same snapshot owner for desktop and mobile replay
+```
+
+Acceptance additions: exact RGBA preservation outside irregular/soft selections;
+correct scaled/touch/keyboard drawing and undo; empty/wrong-size/non-PNG masks
+rejected before HTTP; mask persistence and workspace/session boundaries; ordered
+session image reuse without import; separate chat/image endpoints and credentials;
+provider reload/edit preserves secrets and does not redirect queued requests;
+legacy settings migration; Web and Electron UI plus real CLI execution.
 
 The workbench has a blank canvas, aspect-correct pending state, prompt, ordered
 references, size, format, transparency, seed, advanced guidance/negative prompt

@@ -36,5 +36,14 @@ was opened in a terminal session.
   providers or repeat a failed generation request.
 
 The tool is enabled in the image workbench or with `imageGeneration.enabled` in
-the CLI configuration. A dedicated image provider may be selected; otherwise the
-current conversation provider supplies the connection. Keys remain private.
+the CLI configuration. Set `imageGeneration.providerId` to an independently configured API-key provider.
+The conversation provider is never used as a fallback. Keys remain private.
+
+For regional repainting, use `mask` with a session artifact ID or a workspace PNG
+path. Transparent mask pixels are edited; opaque pixels are preserved. The mask
+must match Picture 1 and the output dimensions; output must be PNG. Keep the
+parent target first when specifying references. The workbench supports painting,
+erasing, undo and selecting other generated images from the current session.
+Qwen uses visual selection guidance and Host compositing, not a native diffusion
+mask API. Pixels outside the selection are preserved; inspect the generated area
+before claiming that it matches the requested change.

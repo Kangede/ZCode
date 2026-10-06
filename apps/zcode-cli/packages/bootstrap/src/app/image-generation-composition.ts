@@ -6,11 +6,11 @@ import {
   type TraceContext,
   type ToolArtifactStorePort,
 } from "@zcode/contracts";
-import { isApiKeyAccess } from "@zcode/provider";
 import type { AgentRuntime } from "@zcode/core";
 import type { ImageGenerationSettings } from "@zcode/shared/image-generation";
 import type { ProviderRegistryModelSource } from "./provider-registry-model-runtime.js";
 import { ImageTaskService } from "./image-generation-service.js";
+import { resolveImageProvider } from "./image-provider.js";
 
 export async function createImageTaskService(options: {
   trace: TraceContext;
@@ -38,19 +38,7 @@ export async function createImageTaskService(options: {
     adapter: createQwenImageAdapter(options.http),
     initialSettings: options.settings,
     connection(providerId) {
-      const selectedId = providerId ?? options.runtime().getSessionModelSelection()?.providerId;
-      const provider = selectedId ? options.registry.getProvider(selectedId) : undefined;
-      if (!provider || !isApiKeyAccess(provider.config.access) || !provider.config.access.apiKey) {
-        throw new ImageGenerationError(
-          "missing_credentials",
-          "Select a configured API-key provider for image generation",
-        );
-      }
-      return {
-        providerId: provider.providerId,
-        baseUrl: provider.config.api.baseUrl,
-        apiKey: provider.config.access.apiKey,
-      };
+      return resolveImageProvider(options.registry, providerId);
     },
     assertUserSubmission() {
       if (options.runtime().getMode() === "plan" || options.runtime().getPlanEnabled())
