@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 const targets = new Map([
-  ["linux-x64", ["linux-x64.AppImage", "linux-x64.deb"]],
+  // electron-builder 按安装格式命名同一个 x64 架构：AppImage=x86_64，deb=amd64。
+  ["linux-x64", ["linux-x86_64.AppImage", "linux-amd64.deb"]],
   ["win32-x64", ["windows-x64-Setup.exe"]],
   ["darwin-arm64", ["macOS-arm64.dmg", "macOS-arm64.zip"]],
   ["darwin-x64", ["macOS-x64.dmg", "macOS-x64.zip"]],

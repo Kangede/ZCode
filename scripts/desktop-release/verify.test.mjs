@@ -12,7 +12,7 @@ async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), "qwen-release-check-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   for (const [platform, arch, suffixes] of [
-    ["linux", "x64", ["linux-x64.AppImage", "linux-x64.deb"]],
+    ["linux", "x64", ["linux-x86_64.AppImage", "linux-amd64.deb"]],
     ["win32", "x64", ["windows-x64-Setup.exe"]],
     ["darwin", "arm64", ["macOS-arm64.dmg", "macOS-arm64.zip"]],
     ["darwin", "x64", ["macOS-x64.dmg", "macOS-x64.zip"]],

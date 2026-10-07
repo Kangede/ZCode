@@ -29,7 +29,7 @@ const result = runCommand(
     "tsx",
     "--test",
     "--test-concurrency=1",
-    "--test-name-pattern=^(desktop |Electron )",
+    "--test-name-pattern=^(desktop |actual Electron )",
     "tests/image-generation/capacity.e2e.ts",
     "tests/image-generation/desktop.e2e.ts",
   ],
