@@ -1,12 +1,6 @@
 // File Config Adapter - Load and patch JSON configuration files
 
-import {
-  existsSync,
-  readFileSync,
-  renameSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
@@ -77,10 +71,9 @@ export function resolvePath(path: string): string {
 export function loadFileConfig(filePath?: string, options: FileConfigOptions = {}): LoadedConfig {
   const resolvedPath = filePath
     ? resolvePath(filePath)
-    : join(
-        resolvePath(options.baseDir ?? DEFAULT_BASE_DIR),
-        options.configFileName ?? DEFAULT_CONFIG_FILE,
-      );
+    : options.baseDir
+      ? join(resolvePath(options.baseDir), options.configFileName ?? DEFAULT_CONFIG_FILE)
+      : join(dirname(getDefaultConfigPath()), options.configFileName ?? DEFAULT_CONFIG_FILE);
 
   if (!existsSync(resolvedPath)) {
     return {
@@ -162,10 +155,7 @@ function migratePluginConfigInFile(value: unknown): Record<string, unknown> | un
   return changed ? { ...value, plugins: nextPlugins } : undefined;
 }
 
-function persistPluginConfigMigration(
-  filePath: string,
-  value: Record<string, unknown>,
-): void {
+function persistPluginConfigMigration(filePath: string, value: Record<string, unknown>): void {
   const tempPath = `${filePath}.migrate.${process.pid}.${Date.now()}.tmp`;
   try {
     writeFileSync(tempPath, `${JSON.stringify(value, null, 2)}\n`, {
@@ -441,7 +431,12 @@ export async function removeSuppressedBuiltinInFileConfig(
  * Get default config file path
  */
 export function getDefaultConfigPath(): string {
-  return join(resolvePath(DEFAULT_BASE_DIR), DEFAULT_CONFIG_FILE);
+  // 定制数据目录也必须隔离 CLI 配置；显式传入的文件路径仍由调用方决定。
+  const dataBaseDir = process.env.ZCODE_DATA_BASE_DIR?.trim();
+  return join(
+    dataBaseDir ? join(dataBaseDir, ".zcode", "cli") : resolvePath(DEFAULT_BASE_DIR),
+    DEFAULT_CONFIG_FILE,
+  );
 }
 
 /**

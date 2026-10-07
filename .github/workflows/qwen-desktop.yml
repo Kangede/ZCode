@@ -1,0 +1,95 @@
+name: Qwen desktop release builds
+
+on:
+  push:
+    branches: [feat/qwen-image-workbench]
+    paths:
+      - .github/workflows/qwen-desktop.yml
+      - scripts/desktop-release/**
+      - packages/desktop/**
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - package.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qwen-desktop-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-22.04
+          - target: windows-x64
+            runner: windows-2022
+          - target: macOS-arm64
+            runner: macos-15
+          - target: macOS-x64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      RAYON_NUM_THREADS: "2"
+      ZCODE_ENV: production
+      ZCODE_PREVIEW_IDENTITY: "1"
+      ZCODE_SKIP_REMOTE_ASSETS: "1"
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.14.0
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10.33.2
+          run_install: false
+      - name: Linux desktop libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libgbm1 libnss3 libasound2 libxss1 libfuse2
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Release completeness and checksum gate tests
+        run: node --test scripts/desktop-release/verify.test.mjs
+      - name: Build native desktop installers
+        run: node scripts/desktop-release/build.mjs
+      # 干净 runner 没有 contracts/adapters 的 dist，必须先构建再运行依赖它们的测试。
+      - name: Image contract tests
+        if: runner.os == 'Linux'
+        run: pnpm test:image-generation
+      - name: Linux packaged app acceptance
+        if: runner.os == 'Linux'
+        run: xvfb-run -a node scripts/desktop-release/test.mjs
+      - name: Windows/macOS packaged app acceptance
+        if: runner.os != 'Linux'
+        run: node scripts/desktop-release/test.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qwen-desktop-${{ matrix.target }}
+          path: dist/desktop-release/artifacts/*
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Save acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: evidence-${{ matrix.target }}
+          path: |
+            .evidence/automated/**/screenshots.json
+            .evidence/automated/**/*.png
+            .evidence/automated/**/electron.json
+            .evidence/automated/**/*.log
+          if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 14

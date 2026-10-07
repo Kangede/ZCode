@@ -1,3 +1,4 @@
+import type { ImageGenerationRequest, ImageGenerationReply } from "@zcode/shared/image-generation";
 import {
   createContext,
   useContext,
@@ -43,6 +44,7 @@ import type { AttachmentUploadOptions } from "@/v4/attachmentUploadTransaction.j
 import { ConversationTelemetryPaneAttachment } from "@/v4/telemetry/ConversationTelemetryAttachment.js";
 
 export interface V4ConversationContextValue {
+  imageGeneration(request: ImageGenerationRequest): Promise<ImageGenerationReply>;
   layer: SessionDataLayer;
   sendCommand(envelope: CommandEnvelope): Promise<CommandAck>;
   fileChanges(params: V4ConversationFileChangesParams): Promise<V4ConversationFileChangesResult>;
@@ -132,6 +134,7 @@ function ReadyV4ConversationProvider({
     const layer = new SessionDataLayer({ transport });
     return {
       layer,
+      imageGeneration: (request: ImageGenerationRequest) => transport.imageGeneration(request),
       sendCommand: (envelope: CommandEnvelope) => transport.sendCommand(envelope),
       fileChanges: (params: V4ConversationFileChangesParams) => transport.fileChanges(params),
       fileRewindPreview: (params: V4ConversationFileRewindPreviewParams) =>
@@ -302,6 +305,8 @@ function ReadyV4PaneConversationProvider({
           lease.transport.fileRewindPreview(params),
         workflowRunEvents: (params: V4ConversationWorkflowRunEventsParams) =>
           lease.transport.workflowRunEvents(params),
+        imageGeneration: (request: ImageGenerationRequest) =>
+          lease.transport.imageGeneration(request),
         workflowRunArtifacts: (params: V4ConversationWorkflowRunArtifactsParams) =>
           lease.transport.workflowRunArtifacts(params),
         workflowRunArtifactData: (params: V4ConversationWorkflowRunArtifactDataParams) =>

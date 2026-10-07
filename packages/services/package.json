@@ -10,7 +10,10 @@
     ".": "./src/index.ts",
     "./cua-permission-broker": "./src/cua-permission-broker/index.ts",
     "./process/processTreeTerminator": "./src/process/processTreeTerminator.ts",
-    "./node": "./src/node.ts"
+    "./node": "./src/node.ts",
+    "./window-controller/windowHostControllerService.js": "./src/window-controller/windowHostControllerService.ts",
+    "./window-controller/windowHostControllerProjection.js": "./src/window-controller/windowHostControllerProjection.ts",
+    "./window-controller/windowHostSessionsIndexObserver.js": "./src/window-controller/windowHostSessionsIndexObserver.ts"
   },
   "scripts": {
     "lint": "oxlint",

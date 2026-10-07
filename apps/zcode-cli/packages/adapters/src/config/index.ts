@@ -113,6 +113,7 @@ class ConfigStore {
       if (config.network.timeout !== undefined)
         this.set(ConfigKey.HttpTimeout, config.network.timeout, scope);
     }
+    if (config.imageGeneration) this.set(ConfigKey.ImageGeneration, config.imageGeneration, scope);
     if (config.features) {
       if (config.features.compact !== undefined)
         this.set(ConfigKey.FeatureCompact, config.features.compact, scope);
@@ -274,6 +275,7 @@ export class ConfigPortImpl implements ConfigPort {
         sessionDbPath:
           this.store.get(ConfigKey.StorageSessionDbPath) ?? DefaultConfig.storage.sessionDbPath,
       },
+      imageGeneration: this.store.get(ConfigKey.ImageGeneration),
       network: {
         httpProxy: this.store.get(ConfigKey.HttpProxy),
         noProxy: this.store.get(ConfigKey.NoProxy),

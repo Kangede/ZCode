@@ -1,3 +1,4 @@
+import type { ImageGenerationRequest, ImageGenerationReply } from "@zcode/shared/image-generation";
 import type { BackgroundBashOutputResult, SessionDebugSnapshot } from "@zcode/shared";
 /* eslint-disable max-lines -- ZCode agent service 接口集中声明 protocol/session/workspace 方法，拆分会增加 service descriptor 迁移成本。 */
 import type { Event, IDisposable } from "@zcode/rpc";
@@ -730,6 +731,9 @@ export interface IZCodeAgentService {
   // ── v4 conversation 通道（竖切）──
   /** RPC attachment 建立后先读取 host 可信 hello。 */
   helloConversationV4(): Promise<HelloMessage>;
+  imageGenerationV4(
+    params: ImageGenerationRequest & { workspacePath: string; workspaceIdentity?: string },
+  ): Promise<ImageGenerationReply>;
   /** hello 校验后回送 clientHello；metadata 不能覆盖 connection mode/profile。 */
   initializeConversationV4(clientHello: ClientHello): Promise<void>;
   /** 仅供 trusted host relay/facade；terminal RPC caller 必须被 connection scope 拒绝。 */

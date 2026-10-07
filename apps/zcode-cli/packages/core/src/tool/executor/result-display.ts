@@ -1,3 +1,4 @@
+import { imageJobSchema } from "@zcode/shared/image-generation";
 import {
   RESPOND_TO_COORDINATOR_TOOL_NAME,
   RespondToCoordinatorOutputSchema,
@@ -104,6 +105,17 @@ export function createToolResultDisplay(
     };
   },
 ): ToolResultDisplayPayload | undefined {
+  if (toolName === "GenerateImage") {
+    const parsed = imageJobSchema.safeParse(output);
+    if (parsed.success)
+      return {
+        kind: "image_generation",
+        schemaVersion: 1,
+        jobId: parsed.data.id,
+        artifact: parsed.data.artifact,
+      };
+  }
+
   if (toolName === "Bash") return createBashResultDisplay(output);
 
   const cuaToolName = readCuaToolName(toolName);

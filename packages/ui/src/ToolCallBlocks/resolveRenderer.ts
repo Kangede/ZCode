@@ -1,3 +1,4 @@
+import { GenerateImageToolCallBlock } from "@/ToolCallBlocks/renderers/generate-image.js";
 // ============================================================
 // 工具卡 renderer 注册表：tool identity → 具体 renderer 组件
 // ============================================================
@@ -55,6 +56,7 @@ import { resolveToolCallIdentity } from "@/lib/toolIdentity.js";
 import type { ToolCallBlockRenderContext } from "@/ToolCallBlocks/shared.js";
 
 export function resolveToolCallRenderer(context: ToolCallBlockRenderContext) {
+  if (context.toolCallNode.toolCall.toolName === "GenerateImage") return GenerateImageToolCallBlock;
   if (context.toolCallNode.toolCall.kind === "changesGroup") {
     return ChangesGroupToolCallBlock;
   }

@@ -1,3 +1,4 @@
+import { publicProviderView, preserveProviderSecrets } from "./providerSecretProjection.js";
 import type { Event } from "@zcode/rpc";
 import { ServiceChannels } from "@zcode/shared";
 import {
@@ -112,58 +113,102 @@ export function createProviderSettingsService(
   testConnectivity?: ProviderSettingsConnectivityTester,
 ): IProviderSettingsService {
   return {
-    onDidChange: toEvent((listener) => facade.onDidChange(listener)),
+    onDidChange: toEvent((listener) =>
+      facade.onDidChange((view) => listener(publicProviderView(view))),
+    ),
     getView: async () => {
       await ensureReady();
-      return facade.getView();
+      return publicProviderView(await facade.getView());
     },
     refresh: async (reason) => {
       await ensureReady();
-      return facade.refresh(reason);
+      return publicProviderView(await facade.refresh(reason));
     },
     createPersonalProvider: async (input) => {
       await ensureReady();
-      return facade.createPersonalProvider(input);
+      return publicProviderView(
+        await facade.createPersonalProvider(
+          input?.initialConfig
+            ? { ...input, initialConfig: preserveProviderSecrets(input.initialConfig, undefined) }
+            : input,
+        ),
+      );
     },
     resolveModelConfig: async (input) => {
       await ensureReady();
-      return facade.resolveModelConfig(input);
+      const current =
+        "personalConfig" in input
+          ? facade
+              .getView()
+              .providers.find((provider) => provider.providerId === input.providerId)
+              ?.models.find((model) => model.modelId === input.originalModelId)?.effectiveConfig
+          : undefined;
+      return publicProviderView(
+        await facade.resolveModelConfig(
+          "personalConfig" in input
+            ? { ...input, personalConfig: preserveProviderSecrets(input.personalConfig, current) }
+            : input,
+        ),
+      );
     },
     savePersonalProviderOverlay: async (providerId, config, metadata) => {
       await ensureReady();
-      return facade.savePersonalProviderOverlay(providerId, config, metadata);
+      // 设置界面提交的占位符保留该 Provider 已存密钥；普通编辑不能覆盖成掩码。
+      return publicProviderView(
+        await facade.savePersonalProviderOverlay(providerId, config, metadata, (current) =>
+          preserveProviderSecrets(config, current),
+        ),
+      );
     },
     deletePersonalProvider: async (providerId) => {
       await ensureReady();
-      return facade.deletePersonalProvider(providerId);
+      return publicProviderView(await facade.deletePersonalProvider(providerId));
     },
     reorderPersonalProviders: async (providerIds) => {
       await ensureReady();
-      return facade.reorderPersonalProviders(providerIds);
+      return publicProviderView(await facade.reorderPersonalProviders(providerIds));
     },
     reorderPersonalModels: async (providerId, modelIds) => {
       await ensureReady();
-      return facade.reorderPersonalModels(providerId, modelIds);
+      return publicProviderView(await facade.reorderPersonalModels(providerId, modelIds));
     },
     addPersonalModel: async (providerId, modelId, config, useRecommendedConfig) => {
       await ensureReady();
-      return facade.addPersonalModel(providerId, modelId, config, useRecommendedConfig);
+      return publicProviderView(
+        await facade.addPersonalModel(
+          providerId,
+          modelId,
+          preserveProviderSecrets(config, undefined),
+          useRecommendedConfig,
+        ),
+      );
     },
     renamePersonalModel: async (providerId, currentModelId, nextModelId) => {
       await ensureReady();
-      return facade.renamePersonalModel(providerId, currentModelId, nextModelId);
+      return publicProviderView(
+        await facade.renamePersonalModel(providerId, currentModelId, nextModelId),
+      );
     },
     deletePersonalModel: async (providerId, modelId) => {
       await ensureReady();
-      return facade.deletePersonalModel(providerId, modelId);
+      return publicProviderView(await facade.deletePersonalModel(providerId, modelId));
     },
     savePersonalModelDraft: async (input) => {
       await ensureReady();
-      return facade.savePersonalModelDraft(input);
+      const current = facade
+        .getView()
+        .providers.find((provider) => provider.providerId === input.providerId)
+        ?.models.find((model) => model.modelId === input.originalModelId)?.effectiveConfig;
+      return publicProviderView(
+        await facade.savePersonalModelDraft({
+          ...input,
+          personalConfig: preserveProviderSecrets(input.personalConfig, current),
+        }),
+      );
     },
     setPersonalModelEnabled: async (providerId, modelId, enabled) => {
       await ensureReady();
-      return facade.setPersonalModelEnabled(providerId, modelId, enabled);
+      return publicProviderView(await facade.setPersonalModelEnabled(providerId, modelId, enabled));
     },
     testModelConnectivity: async (input) => {
       await ensureReady();
@@ -225,7 +270,7 @@ export function createModelSelectionService(
     if (disposed) throw new Error("ModelSelectionService 已 dispose");
     const base = facade.getView(configuredDefault);
     if (revision < base.revision) revision = base.revision;
-    return facade.getView(configuredDefault, revision, input);
+    return publicProviderView(facade.getView(configuredDefault, revision, input));
   };
   const emit = (): void => {
     if (disposed) return;

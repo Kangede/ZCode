@@ -158,6 +158,10 @@ export class ReplaceableConversationTransport implements ConversationTransport {
 
   // workflow 用户面产物的三条读接口必须在此转发；遗漏时 service proxy 上的方法为
   // undefined，侧板调用就会抛错。
+  imageGeneration(params: Parameters<ConversationTransport["imageGeneration"]>[0]) {
+    return this.current.imageGeneration(params);
+  }
+
   workflowRunArtifacts(
     params: Parameters<ConversationTransport["workflowRunArtifacts"]>[0],
   ): ReturnType<ConversationTransport["workflowRunArtifacts"]> {

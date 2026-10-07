@@ -3,15 +3,27 @@ import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import { createServer } from "node:net";
-import { networkInterfaces } from "node:os";
+import { homedir, networkInterfaces } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const { version } = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+const { version, zcodeImageWorkbench } = JSON.parse(
+  await readFile(join(root, "package.json"), "utf8"),
+);
 const serverEntry = join(root, "server", "entry-http.js");
 const webRoot = join(root, "web");
 const agentEntry = join(root, "agent", "zcode.cjs");
+
+// 仅定制发行包隔离数据；普通发行包和用户显式路径覆盖保持原语义。
+if (zcodeImageWorkbench === true) {
+  const profile = join(homedir(), ".zcode-profiles", "qwen-image");
+  process.env.ZCODE_DATA_BASE_DIR ||= profile;
+  process.env.ZCODE_DESKTOP_HOME_DIR ||= profile;
+  process.env.ZCODE_STORAGE_DIR ||= join(profile, ".zcode");
+  process.env.ZCODE_SESSION_DB_PATH ||= join(process.env.ZCODE_STORAGE_DIR, "sessions.sqlite");
+  process.env.ZCODE_LOG_DIR ||= join(process.env.ZCODE_STORAGE_DIR, "cli", "log");
+}
 
 function usage() {
   return `Usage:

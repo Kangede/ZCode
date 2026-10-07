@@ -35,6 +35,7 @@ export const hostCapabilitiesSchema = z.object({
    * `state.updated`，并且先经 `clampWorkflowRunsForLegacy` 裁到旧界。
    */
   workflowRunDeltas: z.boolean().optional(),
+  imageGenerationV1: z.boolean().optional(),
 });
 export type HostCapabilities = z.infer<typeof hostCapabilitiesSchema>;
 
@@ -82,6 +83,7 @@ export const clientHelloSchema = z
          * 是 `.strict()` 的，老 Host 见到不认识的键会整条 clientHello 解析失败、连接握不上手。
          */
         workflowRunDeltas: z.boolean().optional(),
+        imageGenerationV1: z.boolean().optional(),
       })
       .strict()
       .optional(),
@@ -330,6 +332,7 @@ export type RoutedTopicWireCandidate = z.infer<typeof routedTopicWireCandidateSc
 // 载体复用现有 JSON-RPC（stdio NDJSON / socket），方法名带 v4/ 前缀与旧协议并存；
 // 旧 session/* 方法删除后，这里就是唯一协议面。
 export const V4_METHODS = {
+  conversationImageGeneration: "v4/conversation/imageGeneration",
   connectionFlow: "v4/connection/flow",
   controllerSubscribe: "v4/controller/subscribe",
   controllerResync: "v4/controller/resync",
@@ -434,6 +437,7 @@ export const v4ConversationSubscribeParamsSchema = subscribeParamsSchema.extend(
    * 不是某一次订阅可以自选的口味。缺席 = 按旧消费者处理（整键 patch + 旧界裁剪）。
    */
   workflowRunDeltas: z.boolean().optional(),
+  imageGenerationV1: z.boolean().optional(),
 });
 export type V4ConversationSubscribeParams = z.infer<typeof v4ConversationSubscribeParamsSchema>;
 

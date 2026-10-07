@@ -6,7 +6,10 @@ import { stageAgentBundle } from "../packages/desktop/scripts/stage-agent-bundle
 import { runCommand } from "./spawn-command.mjs";
 
 // adapters tsc 在内存受限机器上会 OOM（exit 134），给整条构建链路提高堆上限。
-process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ? process.env.NODE_OPTIONS + " " : ""}--max-old-space-size=8192`;
+// 尊重调用方的内存预算；无条件追加 8192 会覆盖低内存验收机的显式限制。
+if (!process.env.NODE_OPTIONS?.includes("--max-old-space-size")) {
+  process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ? process.env.NODE_OPTIONS + " " : ""}--max-old-space-size=8192`;
+}
 import {
   stageBuiltinProviderConfig,
   resolveBuiltinProviderBuildEnvironment,

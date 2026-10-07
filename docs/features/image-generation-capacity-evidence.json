@@ -1,0 +1,1733 @@
+{
+  "date": "2026-10-06",
+  "deployment": {
+    "gpu": "A40 48GB",
+    "precision": "BF16",
+    "performanceMode": "manual",
+    "textEncoderResidency": "layerwise-offload",
+    "dynamicBatching": false,
+    "hardwareAndResidencySource": "confirmed by user in this chat",
+    "sglangVersion": "0.5.21.dev367+ge332e1b84"
+  },
+  "parameters": {
+    "n": 1,
+    "steps": 40,
+    "guidanceScale": 1,
+    "cacheDit": false,
+    "generatorDevice": "cpu",
+    "format": "PNG",
+    "concurrency": 1
+  },
+  "classification": "Qualified uniform reference limits for the tested A40 deployment",
+  "memoryMetric": {
+    "field": "peak_memory_mb",
+    "unit": "MiB",
+    "meaning": "PyTorch peak reserved allocator memory"
+  },
+  "memoryCeilingMb": 46000,
+  "policy": [
+    {
+      "maxPixels": 2359296,
+      "maxReferences": 5
+    },
+    {
+      "maxPixels": 3211264,
+      "maxReferences": 3
+    },
+    {
+      "maxPixels": null,
+      "maxReferences": 2
+    }
+  ],
+  "counts": {
+    "requests": 36,
+    "succeeded": 34,
+    "failed": 2
+  },
+  "scopeNote": "Upper tier uses a common limit across all maximum ratios. Individual finer-grained per-size maxima were not exhaustively pursued after a higher-count OOM disproved a larger uniform limit.",
+  "historicalEvidence": {
+    "date": "2026-09-22",
+    "source": "LocalLLMProxy/docs/qwen-image-2.1-integration.md",
+    "observations": [
+      {
+        "size": "1536x1536",
+        "references": 5,
+        "result": "succeeded with low headroom",
+        "peakMemoryMb": 47258
+      },
+      {
+        "size": "1792x1792",
+        "references": 5,
+        "result": "OOM and process exit"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "name": "baseline",
+      "recovery": null,
+      "startedAt": "2026-10-06T09:02:54.004Z",
+      "finishedAt": "2026-10-06T09:09:13.790Z",
+      "stoppedBecause": "memory_headroom",
+      "memoryCeilingMb": 46000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "boundary",
+      "recovery": null,
+      "startedAt": "2026-10-06T09:10:27.282Z",
+      "finishedAt": "2026-10-06T09:21:31.600Z",
+      "stoppedBecause": null,
+      "memoryCeilingMb": 46000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "ratios",
+      "recovery": null,
+      "startedAt": "2026-10-06T09:22:10.715Z",
+      "finishedAt": "2026-10-06T09:42:06.027Z",
+      "stoppedBecause": null,
+      "memoryCeilingMb": 46000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "repeat",
+      "recovery": null,
+      "startedAt": "2026-10-06T09:42:41.896Z",
+      "finishedAt": "2026-10-06T09:46:44.289Z",
+      "stoppedBecause": "memory_headroom",
+      "memoryCeilingMb": 46000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "confirm",
+      "recovery": null,
+      "startedAt": "2026-10-06T09:49:44.815Z",
+      "finishedAt": "2026-10-06T10:01:14.033Z",
+      "stoppedBecause": null,
+      "memoryCeilingMb": 46000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "physical",
+      "recovery": {
+        "userConfirmedRestart": true,
+        "health": "ok",
+        "serverVersion": "0.5.21.dev367+ge332e1b84",
+        "checkedAt": "2026-10-06T10:20:52.076099+00:00"
+      },
+      "startedAt": "2026-10-06T10:06:36.916Z",
+      "finishedAt": "2026-10-06T10:13:10.513Z",
+      "stoppedBecause": null,
+      "memoryCeilingMb": 49000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "high-two",
+      "recovery": null,
+      "startedAt": "2026-10-06T10:20:52.816Z",
+      "finishedAt": "2026-10-06T10:50:59.322Z",
+      "stoppedBecause": null,
+      "memoryCeilingMb": 49000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "high-three",
+      "recovery": {
+        "userConfirmedRestart": true,
+        "health": "ok",
+        "serverVersion": "0.5.21.dev367+ge332e1b84",
+        "checkedAt": "2026-10-06T10:59:10.350734+00:00"
+      },
+      "startedAt": "2026-10-06T10:52:48.576Z",
+      "finishedAt": "2026-10-06T10:53:18.363Z",
+      "stoppedBecause": null,
+      "memoryCeilingMb": 49000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    },
+    {
+      "name": "verification",
+      "recovery": null,
+      "startedAt": "2026-10-06T10:59:11.280Z",
+      "finishedAt": "2026-10-06T11:13:31.512Z",
+      "stoppedBecause": null,
+      "memoryCeilingMb": 49000,
+      "environment": {
+        "version": "0.5.21.dev367+ge332e1b84",
+        "tpSize": 1,
+        "dpSize": 1,
+        "pipeline": "QwenImage21Pipeline",
+        "gpus": 1,
+        "ditPrecision": "bf16",
+        "vaePrecision": "bf16"
+      }
+    }
+  ],
+  "cells": [
+    {
+      "name": "1280x1280-5-baseline",
+      "size": "1280x1280",
+      "count": 5,
+      "seed": 82,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:02:54.127Z",
+      "durationMs": 92092,
+      "peakMemoryMb": 44150,
+      "inferenceTimeS": 91.17850081715733,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 365469,
+          "mimeType": "image/png",
+          "sha256": "22c87c072cd6164ffadd50702c3f0d3039263ab14cf98b6dde055bd2ecea4112"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 380166,
+          "mimeType": "image/png",
+          "sha256": "182069a33065a66ab3b9a0f4ebd025db48201a8770097e9f56b97407e7489654"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 364718,
+          "mimeType": "image/png",
+          "sha256": "2ced144fd46177dea925b422220e67e4c37a49071b6758af6142961a0d7cf63b"
+        }
+      ],
+      "output": {
+        "filename": "1280x1280-5-baseline.png",
+        "width": 1280,
+        "height": 1280,
+        "bytes": 2502504,
+        "sha256": "8c0af8acc3c7e8713a78729af1d1ccb784713b2dee509277b50dc3b6121fc6c9"
+      },
+      "run": "baseline",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x1536-3-baseline",
+      "size": "1536x1536",
+      "count": 3,
+      "seed": 82,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:04:26.264Z",
+      "durationMs": 122644,
+      "peakMemoryMb": 44014,
+      "inferenceTimeS": 121.55245842877775,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 365469,
+          "mimeType": "image/png",
+          "sha256": "22c87c072cd6164ffadd50702c3f0d3039263ab14cf98b6dde055bd2ecea4112"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-3-baseline.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3555308,
+        "sha256": "68a2458b4980075c83864bea2212ecc9d561d14631e310869478a8367dd1ffcd"
+      },
+      "run": "baseline",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x1792-2-baseline",
+      "size": "1792x1792",
+      "count": 2,
+      "seed": 82,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:06:28.943Z",
+      "durationMs": 164832,
+      "peakMemoryMb": 46498,
+      "inferenceTimeS": 163.4498315807432,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        }
+      ],
+      "output": {
+        "filename": "1792x1792-2-baseline.png",
+        "width": 1792,
+        "height": 1792,
+        "bytes": 4633368,
+        "sha256": "2057e55c86127b59b43a102e68a6de4fe796fc9fd4487b188fb7432f49e56c12"
+      },
+      "run": "baseline",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x1536-4-boundary",
+      "size": "1536x1536",
+      "count": 4,
+      "seed": 91,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:10:27.387Z",
+      "durationMs": 142305,
+      "peakMemoryMb": 44894,
+      "inferenceTimeS": 141.01158641744405,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 365469,
+          "mimeType": "image/png",
+          "sha256": "22c87c072cd6164ffadd50702c3f0d3039263ab14cf98b6dde055bd2ecea4112"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 380166,
+          "mimeType": "image/png",
+          "sha256": "182069a33065a66ab3b9a0f4ebd025db48201a8770097e9f56b97407e7489654"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-4-boundary.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3662795,
+        "sha256": "473dbc5ac27ae90c9bd4124170255e109f8ea798ee04565e39ac7638ea9f597b"
+      },
+      "run": "boundary",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x1792-1-boundary",
+      "size": "1792x1792",
+      "count": 1,
+      "seed": 91,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:12:49.720Z",
+      "durationMs": 129990,
+      "peakMemoryMb": 38238,
+      "inferenceTimeS": 127.77956400439143,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "1792x1792-1-boundary.png",
+        "width": 1792,
+        "height": 1792,
+        "bytes": 4456560,
+        "sha256": "e2918357521b660dd4f1ade9ffab5570ddcdbd069b95ed1f6a7af4a23c53aa61"
+      },
+      "run": "boundary",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x1792-3-boundary",
+      "size": "1792x1792",
+      "count": 3,
+      "seed": 91,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:14:59.751Z",
+      "durationMs": 198677,
+      "peakMemoryMb": 45924,
+      "inferenceTimeS": 197.1554444618523,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 365469,
+          "mimeType": "image/png",
+          "sha256": "22c87c072cd6164ffadd50702c3f0d3039263ab14cf98b6dde055bd2ecea4112"
+        }
+      ],
+      "output": {
+        "filename": "1792x1792-3-boundary.png",
+        "width": 1792,
+        "height": 1792,
+        "bytes": 4623488,
+        "sha256": "eb0da839329d029cfffcb54fcd0dcd081288967bd083278d122d2465794d711c"
+      },
+      "run": "boundary",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2048x2048-1-boundary",
+      "size": "2048x2048",
+      "count": 1,
+      "seed": 91,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:18:18.458Z",
+      "durationMs": 193122,
+      "peakMemoryMb": 44896,
+      "inferenceTimeS": 190.9237967673689,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "2048x2048-1-boundary.png",
+        "width": 2048,
+        "height": 2048,
+        "bytes": 6054321,
+        "sha256": "f3cb7a79ee9644bd22f42893e6256e26c65bd1afaade8ce08291b3a5242bacb2"
+      },
+      "run": "boundary",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2400x1792-1-ratio",
+      "size": "2400x1792",
+      "count": 1,
+      "seed": 103,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:22:10.791Z",
+      "durationMs": 200621,
+      "peakMemoryMb": 44462,
+      "inferenceTimeS": 197.71096117980778,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "2400x1792-1-ratio.png",
+        "width": 2400,
+        "height": 1792,
+        "bytes": 6157547,
+        "sha256": "179420cb381b21f5d6f04934cc416da81ae146ad0fe0bd396bdf892a570cfee5"
+      },
+      "run": "ratios",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x2400-1-ratio",
+      "size": "1792x2400",
+      "count": 1,
+      "seed": 103,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:25:31.446Z",
+      "durationMs": 201646,
+      "peakMemoryMb": 44464,
+      "inferenceTimeS": 198.7352145044133,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "1792x2400-1-ratio.png",
+        "width": 1792,
+        "height": 2400,
+        "bytes": 6071094,
+        "sha256": "451f75ab3f80cfef7065950d7b65fe8fcc66440b1338ff7325d88b48f60597f9"
+      },
+      "run": "ratios",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2528x1696-1-ratio",
+      "size": "2528x1696",
+      "count": 1,
+      "seed": 103,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:28:53.117Z",
+      "durationMs": 200167,
+      "peakMemoryMb": 44414,
+      "inferenceTimeS": 198.1594047676772,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "2528x1696-1-ratio.png",
+        "width": 2528,
+        "height": 1696,
+        "bytes": 6038510,
+        "sha256": "c74dbf535232a4ff49f6cbcdb2205441ae140efedc891669aa793403a650fbb6"
+      },
+      "run": "ratios",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1696x2528-1-ratio",
+      "size": "1696x2528",
+      "count": 1,
+      "seed": 103,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:32:13.312Z",
+      "durationMs": 200155,
+      "peakMemoryMb": 44414,
+      "inferenceTimeS": 197.3451938731596,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "1696x2528-1-ratio.png",
+        "width": 1696,
+        "height": 2528,
+        "bytes": 6023155,
+        "sha256": "14fb69dad1e45d77e220aac230be5e9cb05d4f50f97bb4b8593b4c9ec23a90f4"
+      },
+      "run": "ratios",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2752x1536-1-ratio",
+      "size": "2752x1536",
+      "count": 1,
+      "seed": 103,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:35:33.489Z",
+      "durationMs": 196825,
+      "peakMemoryMb": 43874,
+      "inferenceTimeS": 194.70831955969334,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "2752x1536-1-ratio.png",
+        "width": 2752,
+        "height": 1536,
+        "bytes": 6114618,
+        "sha256": "1f85a6d0f2020fe69b863455a1bb8b3aed049e0ddaa993619914c4a3864650b2"
+      },
+      "run": "ratios",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x2752-1-ratio",
+      "size": "1536x2752",
+      "count": 1,
+      "seed": 103,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:38:50.341Z",
+      "durationMs": 195671,
+      "peakMemoryMb": 43710,
+      "inferenceTimeS": 192.70899377577007,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "1536x2752-1-ratio.png",
+        "width": 1536,
+        "height": 2752,
+        "bytes": 5934855,
+        "sha256": "4b633391273f40b0401e75300990a33f664049325939efba9eea81ae2e9b4ff0"
+      },
+      "run": "ratios",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1280x1280-5-large-repeat",
+      "size": "1280x1280",
+      "count": 5,
+      "seed": 127,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:42:42.905Z",
+      "durationMs": 95700,
+      "peakMemoryMb": 43376,
+      "inferenceTimeS": 93.23954084981233,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        },
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        },
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2375171,
+          "mimeType": "image/png",
+          "sha256": "333b38447724356c66db4d06c97866b4a08edf398e339b803edb3110aa058ee4"
+        },
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2231785,
+          "mimeType": "image/png",
+          "sha256": "bbddb6c2de7725970d04f0e1eabcd9b6a7f0f6e44ba1c39fc65e1921463e0bba"
+        }
+      ],
+      "output": {
+        "filename": "1280x1280-5-large-repeat.png",
+        "width": 1280,
+        "height": 1280,
+        "bytes": 2504938,
+        "sha256": "f5bb326d20087006c3bd6ffaa9679d1c90e53718800910b3f4d53be858b93b30"
+      },
+      "run": "repeat",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x1536-4-large-repeat",
+      "size": "1536x1536",
+      "count": 4,
+      "seed": 127,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:44:19.442Z",
+      "durationMs": 144819,
+      "peakMemoryMb": 46770,
+      "inferenceTimeS": 142.6312004495412,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        },
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        },
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2375171,
+          "mimeType": "image/png",
+          "sha256": "333b38447724356c66db4d06c97866b4a08edf398e339b803edb3110aa058ee4"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-4-large-repeat.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3558109,
+        "sha256": "781586abdf26c748a2db6c44ebe9aa6618dbe8b5ea5f20f52d457058237ee2aa"
+      },
+      "run": "repeat",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x1536-3-large-confirm",
+      "size": "1536x1536",
+      "count": 3,
+      "seed": 151,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:49:45.571Z",
+      "durationMs": 122290,
+      "peakMemoryMb": 44012,
+      "inferenceTimeS": 119.74206285364926,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        },
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-3-large-confirm.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3507630,
+        "sha256": "0dd5229ef9a8b88b348b37604a522e86a8385873591c8af35766d6ffac160cbe"
+      },
+      "run": "confirm",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x1792-2-large-confirm",
+      "size": "1792x1792",
+      "count": 2,
+      "seed": 151,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:51:48.320Z",
+      "durationMs": 164648,
+      "peakMemoryMb": 45556,
+      "inferenceTimeS": 161.88972595799714,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "1792x1792-2-large-confirm.png",
+        "width": 1792,
+        "height": 1792,
+        "bytes": 4561257,
+        "sha256": "1c5b606753a4db2e983a1c2bd797906520dfcf330c30c7570f8b428af9685d72"
+      },
+      "run": "confirm",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2048x2048-1-large-repeat",
+      "size": "2048x2048",
+      "count": 1,
+      "seed": 127,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:54:33.287Z",
+      "durationMs": 194709,
+      "peakMemoryMb": 43642,
+      "inferenceTimeS": 191.1126873223111,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "2048x2048-1-large-repeat.png",
+        "width": 2048,
+        "height": 2048,
+        "bytes": 5990327,
+        "sha256": "763935f0b781f194e93a9daaf621cdeaedc1487e0f768524892917c15eab01af"
+      },
+      "run": "confirm",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2400x1792-1-portrait-repeat",
+      "size": "2400x1792",
+      "count": 1,
+      "seed": 139,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T09:57:48.444Z",
+      "durationMs": 205569,
+      "peakMemoryMb": 44442,
+      "inferenceTimeS": 201.53849459066987,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        }
+      ],
+      "output": {
+        "filename": "2400x1792-1-portrait-repeat.png",
+        "width": 2400,
+        "height": 1792,
+        "bytes": 6314624,
+        "sha256": "e01969d9250c500947472524b4703ae3088cfb417d75da1c4318188e04983e37"
+      },
+      "run": "confirm",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x1792-3-physical",
+      "size": "1792x1792",
+      "count": 3,
+      "seed": 167,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:06:37.677Z",
+      "durationMs": 199116,
+      "peakMemoryMb": 45984,
+      "inferenceTimeS": 196.8496727021411,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        },
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        }
+      ],
+      "output": {
+        "filename": "1792x1792-3-physical.png",
+        "width": 1792,
+        "height": 1792,
+        "bytes": 4870815,
+        "sha256": "51041f8138b1780cb53a98479d5e7ea7103f12b9c6a11739e8713f3ada0f9814"
+      },
+      "run": "physical",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x1536-5-physical",
+      "size": "1536x1536",
+      "count": 5,
+      "seed": 173,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:09:57.757Z",
+      "durationMs": 165823,
+      "peakMemoryMb": 46880,
+      "inferenceTimeS": 163.3509843032807,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        },
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        },
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2375171,
+          "mimeType": "image/png",
+          "sha256": "333b38447724356c66db4d06c97866b4a08edf398e339b803edb3110aa058ee4"
+        },
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2231785,
+          "mimeType": "image/png",
+          "sha256": "bbddb6c2de7725970d04f0e1eabcd9b6a7f0f6e44ba1c39fc65e1921463e0bba"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-5-physical.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3606898,
+        "sha256": "9efda0295980d45f2f79cb5889a291ed2dba20ac84c1f2eeb8d2413016d92d2b"
+      },
+      "run": "physical",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x1792-4-physical",
+      "size": "1792x1792",
+      "count": 4,
+      "seed": 181,
+      "status": "failed",
+      "startedAt": "2026-10-06T10:12:44.414Z",
+      "durationMs": 26077,
+      "peakMemoryMb": null,
+      "inferenceTimeS": null,
+      "health": "unavailable",
+      "httpStatus": 500,
+      "failureKind": "http_error",
+      "operatorConfirmedOOM": true,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        },
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        },
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2375171,
+          "mimeType": "image/png",
+          "sha256": "333b38447724356c66db4d06c97866b4a08edf398e339b803edb3110aa058ee4"
+        }
+      ],
+      "output": null,
+      "run": "physical",
+      "admittedByPolicy": false
+    },
+    {
+      "name": "2048x2048-2-physical",
+      "size": "2048x2048",
+      "count": 2,
+      "seed": 191,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:20:53.348Z",
+      "durationMs": 246349,
+      "peakMemoryMb": 44832,
+      "inferenceTimeS": 244.04849044885486,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "2048x2048-2-physical.png",
+        "width": 2048,
+        "height": 2048,
+        "bytes": 5920866,
+        "sha256": "0cdccb674c51af3046bdf528f5d929a7f1275f673c6a8a78d166a032781141ea"
+      },
+      "run": "high-two",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2752x1536-2-physical",
+      "size": "2752x1536",
+      "count": 2,
+      "seed": 192,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:25:00.147Z",
+      "durationMs": 255589,
+      "peakMemoryMb": 43846,
+      "inferenceTimeS": 253.1913184253499,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "2752x1536-2-physical.png",
+        "width": 2752,
+        "height": 1536,
+        "bytes": 6211125,
+        "sha256": "7a2ff2fc27b64a74889b074462963d7d6c8820bbc79451d2903b2329413c1e0d"
+      },
+      "run": "high-two",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x2752-2-physical",
+      "size": "1536x2752",
+      "count": 2,
+      "seed": 193,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:29:16.194Z",
+      "durationMs": 255631,
+      "peakMemoryMb": 43846,
+      "inferenceTimeS": 252.99267052207142,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "1536x2752-2-physical.png",
+        "width": 1536,
+        "height": 2752,
+        "bytes": 5684299,
+        "sha256": "0d33b5b10e5e0ac1bdddbd80379ffa84a052b04d00461119ef8de6bfa2a41861"
+      },
+      "run": "high-two",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2528x1696-2-physical",
+      "size": "2528x1696",
+      "count": 2,
+      "seed": 194,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:33:32.288Z",
+      "durationMs": 260473,
+      "peakMemoryMb": 43984,
+      "inferenceTimeS": 258.09193215705454,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "2528x1696-2-physical.png",
+        "width": 2528,
+        "height": 1696,
+        "bytes": 6165270,
+        "sha256": "eb1605fbfa482dab19619a7ba6203700f835d8edd4d48389d6456214a7225ee9"
+      },
+      "run": "high-two",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1696x2528-2-physical",
+      "size": "1696x2528",
+      "count": 2,
+      "seed": 195,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:37:53.215Z",
+      "durationMs": 258961,
+      "peakMemoryMb": 43984,
+      "inferenceTimeS": 256.41683180071414,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "1696x2528-2-physical.png",
+        "width": 1696,
+        "height": 2528,
+        "bytes": 6027555,
+        "sha256": "3144b6c60aaa6cd14394e91cfbc1a3048da58729b985d1b7ef25ac1ee54ab894"
+      },
+      "run": "high-two",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2400x1792-2-physical",
+      "size": "2400x1792",
+      "count": 2,
+      "seed": 196,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:42:12.623Z",
+      "durationMs": 262635,
+      "peakMemoryMb": 44000,
+      "inferenceTimeS": 260.2157710697502,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "2400x1792-2-physical.png",
+        "width": 2400,
+        "height": 1792,
+        "bytes": 6218757,
+        "sha256": "dc263adf66d868e56e10448f910381f668834fb6f246be6b98ccaf55e455eb25"
+      },
+      "run": "high-two",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1792x2400-2-physical",
+      "size": "1792x2400",
+      "count": 2,
+      "seed": 197,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:46:35.712Z",
+      "durationMs": 263590,
+      "peakMemoryMb": 44000,
+      "inferenceTimeS": 261.029932172969,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        }
+      ],
+      "output": {
+        "filename": "1792x2400-2-physical.png",
+        "width": 1792,
+        "height": 2400,
+        "bytes": 6280247,
+        "sha256": "3e090eeef6cf8016abcb604441a76b95bd543a6008a299a68465dc1e3c572906"
+      },
+      "run": "high-two",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2400x1792-3-physical",
+      "size": "2400x1792",
+      "count": 3,
+      "seed": 216,
+      "status": "failed",
+      "startedAt": "2026-10-06T10:52:49.328Z",
+      "durationMs": 29012,
+      "peakMemoryMb": null,
+      "inferenceTimeS": null,
+      "health": "unavailable",
+      "httpStatus": 500,
+      "failureKind": "http_error",
+      "operatorConfirmedOOM": true,
+      "references": [
+        {
+          "width": 2048,
+          "height": 2048,
+          "bytes": 2553294,
+          "mimeType": "image/png",
+          "sha256": "3102f42c6d23c4170918f66312c019811511576d4e040d3ace1fe7191898c144"
+        },
+        {
+          "width": 4096,
+          "height": 2304,
+          "bytes": 4627960,
+          "mimeType": "image/png",
+          "sha256": "d8f1c6de0df79a6423498a900e3146906c0408647e407bb1ef40c3c7a907d8f8"
+        },
+        {
+          "width": 2304,
+          "height": 4096,
+          "bytes": 3580852,
+          "mimeType": "image/png",
+          "sha256": "118bd2f6ab2f5d23643417f9f977cee9d759af00fcc10a531fe968c0780e4af3"
+        }
+      ],
+      "output": null,
+      "run": "high-three",
+      "admittedByPolicy": false
+    },
+    {
+      "name": "1536x1536-1-verification",
+      "size": "1536x1536",
+      "count": 1,
+      "seed": 239,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:59:11.426Z",
+      "durationMs": 83468,
+      "peakMemoryMb": 33396,
+      "inferenceTimeS": 82.3076507402584,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-1-verification.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3397539,
+        "sha256": "e938f35ab884364ef281d9668dc7766fe6ecd828ca9f9fab2347ede7968599d1"
+      },
+      "run": "verification",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x1536-2-verification",
+      "size": "1536x1536",
+      "count": 2,
+      "seed": 240,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T11:00:34.929Z",
+      "durationMs": 103228,
+      "peakMemoryMb": 38610,
+      "inferenceTimeS": 101.48243607115,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-2-verification.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3452064,
+        "sha256": "951c5464ebc0a0182524c5553648fae9b9b8866fb219089e857e43efea948bf4"
+      },
+      "run": "verification",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "1536x1536-5-verification",
+      "size": "1536x1536",
+      "count": 5,
+      "seed": 243,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T11:02:18.218Z",
+      "durationMs": 163484,
+      "peakMemoryMb": 47258,
+      "inferenceTimeS": 162.24190344661474,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 365469,
+          "mimeType": "image/png",
+          "sha256": "22c87c072cd6164ffadd50702c3f0d3039263ab14cf98b6dde055bd2ecea4112"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 380166,
+          "mimeType": "image/png",
+          "sha256": "182069a33065a66ab3b9a0f4ebd025db48201a8770097e9f56b97407e7489654"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 364718,
+          "mimeType": "image/png",
+          "sha256": "2ced144fd46177dea925b422220e67e4c37a49071b6758af6142961a0d7cf63b"
+        }
+      ],
+      "output": {
+        "filename": "1536x1536-5-verification.png",
+        "width": 1536,
+        "height": 1536,
+        "bytes": 3664387,
+        "sha256": "666ea9c850a4a55ffcafc350140dc16c061eb801de59560494e6d42beb26ccee"
+      },
+      "run": "verification",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2048x2048-2-verification",
+      "size": "2048x2048",
+      "count": 2,
+      "seed": 241,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T11:05:01.737Z",
+      "durationMs": 248001,
+      "peakMemoryMb": 45268,
+      "inferenceTimeS": 246.16044353600591,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        }
+      ],
+      "output": {
+        "filename": "2048x2048-2-verification.png",
+        "width": 2048,
+        "height": 2048,
+        "bytes": 5896409,
+        "sha256": "398609213e0b22fa0826f81dc8786fb03896b6958f51ae9244c9664fc8a9a3cc"
+      },
+      "run": "verification",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2400x1792-2-verification",
+      "size": "2400x1792",
+      "count": 2,
+      "seed": 242,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T11:09:09.797Z",
+      "durationMs": 261695,
+      "peakMemoryMb": 45322,
+      "inferenceTimeS": 259.6990567240864,
+      "health": "ok",
+      "httpStatus": 200,
+      "failureKind": null,
+      "operatorConfirmedOOM": null,
+      "references": [
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 398775,
+          "mimeType": "image/png",
+          "sha256": "3ef2f29b8982c677ec5df2323d6710f86330afe41078fd6d4a1eab256e9bcd5b"
+        },
+        {
+          "width": 512,
+          "height": 512,
+          "bytes": 396344,
+          "mimeType": "image/png",
+          "sha256": "90114a34484ab09145884b2c08e95efb299e9cce81041fdfaf7b7cd86db0a9bf"
+        }
+      ],
+      "output": {
+        "filename": "2400x1792-2-verification.png",
+        "width": 2400,
+        "height": 1792,
+        "bytes": 6350670,
+        "sha256": "9399aed66de4951718af22f2c065c165a56a3328163c8d1dc8962352a553ee89"
+      },
+      "run": "verification",
+      "admittedByPolicy": true
+    },
+    {
+      "name": "2048x2048-1-regional-adapter",
+      "run": "repaint",
+      "size": "2048x2048",
+      "count": 1,
+      "seed": 42,
+      "status": "succeeded",
+      "startedAt": "2026-10-06T10:02:42.942Z",
+      "durationMs": 191219,
+      "peakMemoryMb": 44886,
+      "inferenceTimeS": 187.915919768624,
+      "health": "ok",
+      "httpStatus": 200,
+      "admittedByPolicy": true,
+      "output": {
+        "filename": "repaint.png",
+        "width": 2048,
+        "height": 2048,
+        "bytes": 5442850,
+        "sha256": "11d72d6a5180e14c5e0fe9d78b3ae8bf4d07cb1c809e93bb35bc04c779c63534"
+      },
+      "regionalPixelValidation": {
+        "preservedPixels": 4157440,
+        "selectedPixels": 36864,
+        "changedSelectedPixels": 36753
+      }
+    }
+  ],
+  "finalUpstreamHealth": "ok",
+  "qualificationComplete": true
+}

@@ -13,6 +13,8 @@
 
 ZCode is an AI coding workspace with desktop, browser, and terminal interfaces. This repository contains the clients, backend services, shared UI, and Agent CLI and runtime source code.
 
+This fork adds an optional native Qwen image workbench. See the [configuration, testing and maintenance guide](docs/features/image-workbench-guide.md).
+
 ## Updates
 
 - 2026-9-23: Updated to ZCode v3.14.3.

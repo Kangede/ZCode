@@ -5365,6 +5365,7 @@ function toProtocolToolCallDisplay(
 ): ToolCallDisplay | undefined {
   if (!display) return undefined;
   switch (display.kind) {
+    case "image_generation":
     case "node_repl_images":
     case "task_output":
     case "respond_to_coordinator":

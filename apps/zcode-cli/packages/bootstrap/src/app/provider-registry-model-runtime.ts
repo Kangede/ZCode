@@ -7,6 +7,7 @@ import {
   type Provider,
   type ProviderModel,
   type ProviderRegistryView,
+  type ProviderRegistryServiceSnapshot,
 } from "@zcode/provider";
 import { createRegistrySelectionProtocolError } from "./provider-registry-selection.js";
 
@@ -15,6 +16,8 @@ export type RuntimeModelFactory = NonNullable<AgentRuntimeDeps["modelFactory"]>;
 export interface ProviderRegistryModelSource {
   getView(): ProviderRegistryView;
   getProvider(providerId: string): Provider | undefined;
+  /** Optional for older embedded Hosts; Images use validated connections without chat models. */
+  getSnapshot?(): Pick<ProviderRegistryServiceSnapshot, "resolution"> | null;
   getModel(providerId: string, modelId: string): ProviderModel | undefined;
   validateSelection(selection: ModelSelection): ModelSelectionValidation;
   onDidChange(listener: () => void): () => void;

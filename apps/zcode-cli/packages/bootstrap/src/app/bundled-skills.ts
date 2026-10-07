@@ -229,3 +229,11 @@ function getSeaModule(): SeaModule | undefined {
 function hashBytes(bytes: Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
+
+/** 生图技能是可选增量资源，缺失时不影响已有系统技能包。 */
+export async function hasBundledImageSkill(roots: readonly SkillRoot[]): Promise<boolean> {
+  for (const root of roots) {
+    if (await pathExists(join(root.path, "image-generation", "SKILL.md"))) return true;
+  }
+  return false;
+}

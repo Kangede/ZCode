@@ -1,3 +1,4 @@
+import { registerLocalWindowController } from "./localWindowController.js";
 /* eslint-disable max-lines -- HTTP、WebSocket 与静态资源路由集中注册，保持同一鉴权顺序。 */
 import { randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
@@ -300,6 +301,7 @@ export function createHttpServer(
   port = 3030,
   options: HttpServerOptions = {},
 ) {
+  const localController = registerLocalWindowController(services);
   const app = new Hono();
   const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
   const hostCapabilities = createHostCapabilityStore();
@@ -471,6 +473,7 @@ export function createHttpServer(
   });
 
   injectWebSocket(server);
+  server.on("close", () => localController?.dispose());
 
   return server;
 }

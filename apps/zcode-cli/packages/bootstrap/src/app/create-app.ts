@@ -1,3 +1,4 @@
+import { createImageTaskService } from "./image-generation-composition.js";
 import { isAbsolute, join, resolve } from "node:path";
 import {
   createInMemorySessionEventStore,
@@ -10,7 +11,10 @@ import {
   resolveEffectiveBashShellSelection,
 } from "@zcode/adapters/exec";
 import { createNodeFileSystemAdapter } from "@zcode/adapters/fs";
-import { createNodeWebFetchHttpClientAdapter } from "@zcode/adapters/http";
+import {
+  createNodeHttpClientAdapter,
+  createNodeWebFetchHttpClientAdapter,
+} from "@zcode/adapters/http";
 import { createJimpImageProcessorAdapter } from "@zcode/adapters/image";
 import { createPopplerPdfDocumentAdapter } from "@zcode/adapters/pdf";
 import { createNodeSessionMailboxAdapter } from "@zcode/adapters/mailbox";
@@ -69,7 +73,7 @@ import { createPluginFacadeForApp } from "./plugin-facade.js";
 import { resolvePluginRuntimeFeatures } from "./plugin-runtime-features.js";
 import { createSessionFacade } from "./session-facade.js";
 import { resolveAppRuntimeConfig, runtimeConfigLogContext } from "./runtime-config.js";
-import { resolveBundledSkillRoots } from "./bundled-skills.js";
+import { hasBundledImageSkill, resolveBundledSkillRoots } from "./bundled-skills.js";
 import { collectDynamicWorkflowDisabledSkillPaths } from "./dynamic-workflow-gate.js";
 import { createWorkspaceHookRuntimeSecurity } from "./workspace-hook-trust.js";
 import { createScriptWorkflowBridge } from "./script-workflow-methods.js";
@@ -723,7 +727,32 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
       registry: options.providerRegistry,
       currentSelection: () => getRuntime().getSessionModelSelection(),
     });
+    const imageGeneration = await createImageTaskService({
+      trace: traceContext,
+      available: await hasBundledImageSkill(bundledSkillRoots),
+      storageRoot,
+      sessionId,
+      workingDirectory,
+      artifacts: artifactStore,
+      http:
+        options.httpClientPort ??
+        createNodeHttpClientAdapter({
+          env: options.env ?? process.env,
+          proxyUrl: configResult.config.network.httpProxy,
+          noProxy: configResult.config.network.noProxy,
+          caCertFile: configResult.config.network.caCertFile,
+          requestDeadlineOnly: true,
+        }),
+      registry: options.providerRegistry,
+      runtime: getRuntime,
+      settings: configResult.config.imageGeneration,
+      disallowedTools: [
+        ...configResult.config.permission.disallowedTools,
+        ...(runtimeConfig.toolDisallowlist ?? []),
+      ],
+    });
     runtime = new AgentRuntime(sessionId, runtimeConfig, {
+      imageGenerationPort: imageGeneration,
       agentTelemetry: modelTelemetry.agentExecution,
       // 主代理的模型请求过治理器的 observer：立即放行，但让治理器看见它的 429 / 成功。
       modelRequestAdmission: workflowConcurrencyGovernor.observer(),
@@ -920,6 +949,7 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
       return { ref, mediaType, ...(artifactUri ? { artifactUri } : {}) };
     };
     return {
+      imageGeneration: (request) => imageGeneration.request(request),
       sessionId,
       traceId: traceContext.traceId,
       runtime,
@@ -1107,6 +1137,7 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
       },
       ...sessionFacade,
       close: async () => {
+        await imageGeneration.close();
         try {
           await closeSession?.();
         } finally {

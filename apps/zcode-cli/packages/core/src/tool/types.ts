@@ -1,3 +1,4 @@
+import type { ImageGenerationPort } from "@zcode/contracts";
 // ============================================================
 // Tool Types - Core tool types for registry and executor
 // ============================================================
@@ -176,6 +177,7 @@ export interface ToolExecutionContext {
   dynamicWorkflowSnippetPort?: DynamicWorkflowSnippetPort;
   /** 模型目录端口；缺席则 ListModels 报能力缺席，CreateWorkflow 的 subagent_model 被拒。 */
   modelCatalogPort?: ModelCatalogPort;
+  imageGenerationPort?: ImageGenerationPort;
   runtimeTaskRegistry?: RuntimeTaskRegistry;
   readFileState?: ReadFileStateMap;
   recordReadFileStateMetadata?: (metadata: PersistedReadFileStateMetadata) => void;
@@ -255,6 +257,7 @@ export interface ToolInputResolutionContext {
    * 不静默放行一个宿主解不了的字符串。
    */
   modelCatalogPort?: ModelCatalogPort;
+  imageGenerationPort?: ImageGenerationPort;
   sessionId?: string;
   /**
    * 「这个会话此刻加载着某个技能吗」的探针（handlers/workflow-skill-gate.ts）。由 runtime 用
