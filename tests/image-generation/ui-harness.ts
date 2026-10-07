@@ -204,6 +204,8 @@ export async function uiHarness(
             version: app.getVersion(),
             packaged: app.isPackaged,
             name: app.name,
+            platform: process.platform,
+            arch: process.arch,
           })),
           null,
           2,

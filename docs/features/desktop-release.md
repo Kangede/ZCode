@@ -36,9 +36,12 @@ node scripts/desktop-release/test.mjs
 Linux 无桌面环境时，以 `xvfb-run -a node scripts/desktop-release/test.mjs` 运行打包应用测试。构建结果位于 `dist/desktop-release/artifacts/`，每个平台随附独立 manifest；汇集后按 manifest 生成统一 `SHA256SUMS.txt`。
 
 - 每个平台检查产物名称、架构、版本、内置图像 Skill、图像版元数据和打包依赖。
-- 在对应 runner 启动真实打包应用，使用本机模拟 Images 服务验证生成、参考图限制、允许的高分辨率双图，以及错误和草稿恢复；保存截图、日志及测试结果。不调用真实 GPU 上游。
+- Windows 先以 NSIS 静默安装、macOS 从 DMG 复制并卸载映像、Linux 从 deb 解包，再在对应 runner 启动该安装内容。检查应用报告的 CPU 架构、版本、打包状态与图像版元数据；macOS 额外验证代码签名完整性。
+- 使用本机模拟 Images 服务验证生成、参考图限制、允许的高分辨率双图，以及错误和草稿恢复；保存截图、日志及测试结果。不调用真实 GPU 上游。
 - Linux 执行图像单测；所有平台执行构建和打包应用验收。根类型、Lint、架构和变更文件格式检查在发布前执行，原有 CLI Lint 问题继续单列。
 - Windows/macOS 的操作系统签名信任不由自动化绕过；ad-hoc/未签名状态写入 manifest 与 Release 说明。
 - 最终下载链接指向个人 fork 的 GitHub Release，校验和与实际上传文件一致。
+
+汇集四个构建 artifact 后，执行 `node scripts/desktop-release/verify.mjs --directory ARTIFACTS --commit FULL_SHA`。该门禁拒绝缺失平台、不同版本/源码、未完成安装后验收及文件校验和不符；通过后生成统一 `SHA256SUMS.txt` 和本地上传清单。
 
 工作流通过 `feat/qwen-image-workbench` 分支上的发布脚本/工作流变更触发，也保留 `workflow_dispatch` 入口供未来合入默认分支后使用。未修改业务状态、RPC schema、服务队列或会话存储。

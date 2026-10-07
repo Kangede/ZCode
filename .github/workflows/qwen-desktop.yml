@@ -59,11 +59,14 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libgbm1 libnss3 libasound2 libxss1 libfuse2
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Release completeness and checksum gate tests
+        run: node --test scripts/desktop-release/verify.test.mjs
+      - name: Build native desktop installers
+        run: node scripts/desktop-release/build.mjs
+      # 干净 runner 没有 contracts/adapters 的 dist，必须先构建再运行依赖它们的测试。
       - name: Image contract tests
         if: runner.os == 'Linux'
         run: pnpm test:image-generation
-      - name: Build native desktop installers
-        run: node scripts/desktop-release/build.mjs
       - name: Linux packaged app acceptance
         if: runner.os == 'Linux'
         run: xvfb-run -a node scripts/desktop-release/test.mjs
